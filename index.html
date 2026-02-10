@@ -82,8 +82,6 @@
         #yesBtn {
             background-color: #ff1493;
             color: white;
-            bottom: 60px;
-            left: calc(50% - 110px);
         }
 
         #yesBtn:hover {
@@ -93,8 +91,6 @@
         #noBtn {
             background-color: #808080;
             color: white;
-            bottom: 60px;
-            left: calc(50% + 110px);
         }
 
         #noBtn:hover {
@@ -190,6 +186,96 @@
             display: block;
         }
 
+        .voucher-container {
+            position: relative;
+            width: 90%;
+            max-width: 450px;
+            background: linear-gradient(135deg, #fff8dc 0%, #fffacd 100%);
+            border: 3px dashed #d4af37;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: voucher-appear 0.6s ease-in;
+        }
+
+        @keyframes voucher-appear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .voucher-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #d02090;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .voucher-text {
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .voucher-code {
+            background: white;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voucher-validity {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 15px;
+            font-style: italic;
+        }
+
+        .voucher-stamp {
+            position: absolute;
+            top: -15px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: #ff1493;
+            color: white;
+            border: 3px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transform: rotate(-25deg);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            animation: stamp-bounce 0.8s ease-in-out;
+        }
+
+        @keyframes stamp-bounce {
+            0% {
+                transform: rotate(-25deg) scale(0);
+            }
+            50% {
+                transform: rotate(-25deg) scale(1.1);
+            }
+            100% {
+                transform: rotate(-25deg) scale(1);
+            }
+        }
+
         @media (max-width: 700px) {
             .video-container {
                 gap: 10px;
@@ -217,8 +303,26 @@
 
     <div class="success">
         <div class="hearts">💕 💕 💕</div>
-        <div style="font-size: 2.5rem; margin: 30px 0;">Yay! I knew you'd say yes!</div>
-        <div style="font-size: 1.5rem; margin-bottom: 40px;">You made me so happy! 😘</div>
+        <div style="font-size: 2.5rem; margin: 30px 0;">Yay! I knew you'd say yes! 🥰</div>
+        <div style="font-size: 1.2rem; margin-bottom: 40px; color: #333;">Keep this screen handy—it's your voucher for something sweet on the 14th! 🍫</div>
+        
+        <div class="voucher-container">
+            <div class="voucher-stamp">VALID</div>
+            <div class="voucher-content">
+                <div class="voucher-header">🎁 VALENTINE'S VOUCHER 🎁</div>
+                <div class="voucher-text">
+                    <p style="font-size: 1.1rem; margin: 15px 0;">Redeemable For:</p>
+                    <p style="font-size: 1.3rem; font-weight: bold; color: #8b4513;">🍫 CHOCOLATE OF CHOICE 🍫</p>
+                </div>
+                <div class="voucher-code">
+                    <span style="font-size: 0.9rem; color: #666;">Code:</span>
+                    <span style="font-family: monospace; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;">LOVE2026</span>
+                </div>
+                <div class="voucher-validity">
+                    <span>Valid Until: February 14, 2026</span>
+                </div>
+            </div>
+        </div>
         
         <div class="video-container">
             <video id="video1" class="dancing-video" width="280" height="480" muted playsinline loop>
@@ -248,21 +352,33 @@
             isMoving = true;
             lastMoveTime = now;
 
-            // Safe boundaries - keep away from edges and text
-            const padding = 50;
+            // Safe boundaries - keep away from edges
+            const padding = 80;
             const buttonWidth = 100;
             const buttonHeight = 50;
             
             const minX = padding;
-            const maxX = Math.max(window.innerWidth - buttonWidth - padding, padding + 100);
-            const minY = Math.max(window.innerHeight * 0.35, padding); // Start below question
-            const maxY = Math.max(window.innerHeight - 120, minY + 50); // Leave space at bottom
+            const maxX = window.innerWidth - buttonWidth - padding;
+            
+            // Ensure max is greater than min
+            if (maxX <= minX) {
+                // Screen too small, center the button
+                noBtn.style.position = 'fixed';
+                noBtn.style.left = (window.innerWidth / 2 - buttonWidth / 2) + 'px';
+                noBtn.style.top = (window.innerHeight / 2) + 'px';
+                noBtn.style.bottom = 'auto';
+                isMoving = false;
+                return;
+            }
 
-            // Generate random position (clamped to stay on screen)
-            const randomX = Math.max(minX, Math.min(Math.floor(Math.random() * (maxX - minX) + minX), maxX));
-            const randomY = Math.max(minY, Math.min(Math.floor(Math.random() * (maxY - minY) + minY), maxY));
+            const minY = window.innerHeight * 0.35; // Start below question
+            const maxY = Math.max(window.innerHeight - 150, minY + 50);
 
-            // Apply new position immediately
+            // Generate random position
+            const randomX = Math.floor(Math.random() * (maxX - minX)) + minX;
+            const randomY = Math.floor(Math.random() * (maxY - minY)) + minY;
+
+            // Apply new position
             noBtn.style.position = 'fixed';
             noBtn.style.left = randomX + 'px';
             noBtn.style.top = randomY + 'px';
@@ -320,16 +436,34 @@
 
         // Reset button positions on load
         window.addEventListener('load', () => {
+            const centerX = window.innerWidth / 2;
+            
             noBtn.style.position = 'fixed';
-            noBtn.style.left = 'calc(50% + 110px)';
+            noBtn.style.left = Math.max(50, Math.min(centerX + 80, window.innerWidth - 100)) + 'px';
             noBtn.style.top = 'auto';
             noBtn.style.bottom = '60px';
+            noBtn.style.transform = 'none';
             
             yesBtn.style.position = 'fixed';
-            yesBtn.style.left = 'calc(50% - 110px)';
+            yesBtn.style.left = Math.max(50, Math.min(centerX - 80, window.innerWidth - 100)) + 'px';
             yesBtn.style.top = 'auto';
             yesBtn.style.bottom = '60px';
+            yesBtn.style.transform = 'none';
         });
+
+        // Also set initial positions immediately
+        const centerX = window.innerWidth / 2;
+        noBtn.style.position = 'fixed';
+        noBtn.style.left = Math.max(50, Math.min(centerX + 80, window.innerWidth - 100)) + 'px';
+        noBtn.style.top = 'auto';
+        noBtn.style.bottom = '60px';
+        noBtn.style.transform = 'none';
+
+        yesBtn.style.position = 'fixed';
+        yesBtn.style.left = Math.max(50, Math.min(centerX - 80, window.innerWidth - 100)) + 'px';
+        yesBtn.style.top = 'auto';
+        yesBtn.style.bottom = '60px';
+        yesBtn.style.transform = 'none';
     </script>
 </body>
 </html>
