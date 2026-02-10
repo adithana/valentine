@@ -48,12 +48,17 @@
         }
 
         .buttons-wrapper {
-            position: relative;
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
-            height: 200px;
+            height: auto;
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 50;
+            pointer-events: auto;
         }
 
         button {
@@ -65,6 +70,8 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: transform 0.15s ease-out, box-shadow 0.15s;
+            z-index: 50;
+            position: fixed;
         }
 
         button:active {
@@ -75,24 +82,19 @@
         #yesBtn {
             background-color: #ff1493;
             color: white;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-110px);
-            z-index: 5;
+            bottom: 60px;
+            left: calc(50% - 110px);
         }
 
         #yesBtn:hover {
             background-color: #ff0080;
-            transform: translateX(-110px) scale(1.1);
         }
 
         #noBtn {
             background-color: #808080;
             color: white;
-            position: absolute;
-            left: 50%;
-            transform: translateX(110px);
-            z-index: 5;
+            bottom: 60px;
+            left: calc(50% + 110px);
         }
 
         #noBtn:hover {
@@ -162,6 +164,32 @@
             #noBtn {
                 transform: translateX(80px);
             }
+
+            .dancing-video {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 320px;
+            }
+        }
+
+        .video-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .dancing-video {
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            display: none;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .dancing-video.active {
+            display: block;
         }
     </style>
 </head>
@@ -179,75 +207,108 @@
 
     <div class="success">
         <div class="hearts">💕 💕 💕</div>
-        <div style="font-size: 2.5rem; margin: 30px 0;">I knew it!</div>
-        <div style="font-size: 1.5rem;">You made me so happy! 😘</div>
+        <div style="font-size: 2.5rem; margin: 30px 0;">Yay! I knew you'd say yes!</div>
+        <div style="font-size: 1.5rem; margin-bottom: 40px;">You made me so happy! 😘</div>
+        
+        <div class="video-container">
+            <video id="video1" class="dancing-video" width="300" height="500" muted playsinline>
+                <source src="haru.mp4" type="video/mp4">
+            </video>
+            <video id="video2" class="dancing-video" width="300" height="500" muted playsinline>
+                <source src="nami.mp4" type="video/mp4">
+            </video>
+        </div>
     </div>
 
     <script>
         const noBtn = document.getElementById('noBtn');
         const yesBtn = document.getElementById('yesBtn');
         const successScreen = document.querySelector('.success');
+        const video1 = document.getElementById('video1');
+        const video2 = document.getElementById('video2');
         let isMoving = false;
+        let lastMoveTime = 0;
 
         function moveButton() {
-            if (isMoving) return; // Prevent rapid consecutive moves
+            const now = Date.now();
+            // Prevent moves faster than 400ms
+            if (now - lastMoveTime < 400) return;
+            
+            if (isMoving) return;
             isMoving = true;
+            lastMoveTime = now;
 
-            // Ensure button uses fixed positioning
-            noBtn.style.position = 'fixed';
-            noBtn.style.left = 'auto';
-            noBtn.style.top = 'auto';
-            noBtn.style.transform = 'none';
-
-            // Get safe boundaries with padding
-            const padding = 60;
-            const buttonWidth = 80;
+            // Safe boundaries - keep away from edges and text
+            const padding = 50;
+            const buttonWidth = 100;
             const buttonHeight = 50;
             
             const minX = padding;
-            const maxX = Math.max(window.innerWidth - buttonWidth - padding, minX + 100);
-            const minY = Math.max(window.innerHeight / 3, padding);
-            const maxY = Math.max(window.innerHeight - buttonHeight - padding, minY + 100);
+            const maxX = window.innerWidth - buttonWidth - padding;
+            const minY = window.innerHeight * 0.35; // Start below question
+            const maxY = window.innerHeight - 120; // Leave space at bottom
 
             // Generate random position
             const randomX = Math.floor(Math.random() * (maxX - minX) + minX);
             const randomY = Math.floor(Math.random() * (maxY - minY) + minY);
 
-            // Apply new position with slight delay for mobile
-            setTimeout(() => {
-                noBtn.style.left = randomX + 'px';
-                noBtn.style.top = randomY + 'px';
-                isMoving = false;
-            }, 50);
+            // Apply new position immediately
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+            noBtn.style.bottom = 'auto';
+
+            isMoving = false;
+        }
+
+        function playVideos() {
+            // Start with video1
+            video1.classList.add('active');
+            video2.classList.remove('active');
+            video1.currentTime = 0;
+            video1.play();
         }
 
         function celebrate() {
             successScreen.classList.add('show');
+            playVideos();
         }
+
+        // Video transition logic
+        video1.addEventListener('ended', () => {
+            video1.classList.remove('active');
+            video2.classList.add('active');
+            video2.currentTime = 0;
+            video2.play();
+        });
+
+        video2.addEventListener('ended', () => {
+            video2.classList.remove('active');
+            video1.classList.add('active');
+            video1.currentTime = 0;
+            video1.play();
+        });
+
+        // Prevent default touch behaviors
+        document.addEventListener('touchmove', (e) => {
+            if (e.target === noBtn) {
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         // Desktop: Move on hover
         noBtn.addEventListener('mouseenter', moveButton);
 
-        // Mobile: Move on any touch/click attempt
+        // Mobile: Move on touch
         noBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             e.stopPropagation();
             moveButton();
-        });
-
-        noBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
+        }, { passive: false });
 
         noBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            moveButton();
-        });
-
-        noBtn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
             moveButton();
         });
 
@@ -257,14 +318,26 @@
             celebrate();
         });
 
+        yesBtn.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+
         yesBtn.addEventListener('touchend', (e) => {
             e.stopPropagation();
             celebrate();
-        });
+        }, { passive: true });
 
-        // Initial position adjustment on load
+        // Reset button positions on load
         window.addEventListener('load', () => {
             noBtn.style.position = 'fixed';
+            noBtn.style.left = 'calc(50% + 110px)';
+            noBtn.style.top = 'auto';
+            noBtn.style.bottom = '60px';
+            
+            yesBtn.style.position = 'fixed';
+            yesBtn.style.left = 'calc(50% - 110px)';
+            yesBtn.style.top = 'auto';
+            yesBtn.style.bottom = '60px';
         });
     </script>
 </body>
