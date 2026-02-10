@@ -70,8 +70,11 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             transition: transform 0.15s ease-out, box-shadow 0.15s;
-            z-index: 50;
+            z-index: 9999;
             position: fixed;
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: block !important;
         }
 
         button:active {
@@ -82,6 +85,7 @@
         #yesBtn {
             background-color: #ff1493;
             color: white;
+            z-index: 9999;
         }
 
         #yesBtn:hover {
@@ -91,6 +95,7 @@
         #noBtn {
             background-color: #808080;
             color: white;
+            z-index: 9999;
         }
 
         #noBtn:hover {
@@ -454,12 +459,18 @@
         // Also set initial positions immediately
         const centerX = window.innerWidth / 2;
         noBtn.style.position = 'fixed';
+        noBtn.style.visibility = 'visible';
+        noBtn.style.opacity = '1';
+        noBtn.style.display = 'block';
         noBtn.style.left = Math.max(50, Math.min(centerX + 80, window.innerWidth - 100)) + 'px';
         noBtn.style.top = 'auto';
         noBtn.style.bottom = '60px';
         noBtn.style.transform = 'none';
 
         yesBtn.style.position = 'fixed';
+        yesBtn.style.visibility = 'visible';
+        yesBtn.style.opacity = '1';
+        yesBtn.style.display = 'block';
         yesBtn.style.left = Math.max(50, Math.min(centerX - 80, window.innerWidth - 100)) + 'px';
         yesBtn.style.top = 'auto';
         yesBtn.style.bottom = '60px';
