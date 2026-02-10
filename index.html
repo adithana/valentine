@@ -1,236 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Will You Be My Valentine?</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-user-select: none;
-            user-select: none;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title>Will You Be My Valentine?</title>
+  <style>
+    /* Basic reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
+    html, body {
+      height: 100vh;
+      width: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: linear-gradient(135deg,#ffe4e1 0%,#ffb6c1 100%);
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* Crucial for iPhone: prevents the page from bouncing or refreshing while chasing the button */
-        html, body {
-            overscroll-behavior: none;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: linear-gradient(135deg, #ffe4e1 0%, #ffb6c1 100%);
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            touch-action: none;
-        }
+    /* Respect device safe area (notch) */
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
 
-        .container {
-            text-align: center;
-            z-index: 10;
-            padding: 20px;
-        }
+    .container {
+      text-align: center;
+      padding: calc(16px + var(--safe-top)) 20px 20px;
+      z-index: 10;
+    }
 
-        h1 {
-            color: #d02090;
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
+    h1 { color: #d02090; font-size: 1.8rem; margin-bottom: 10px; }
+    .question { font-size: 1.05rem; color: #c71585; margin-bottom: 36px; font-weight: bold; }
 
-        .question {
-            font-size: 1.1rem;
-            color: #c71585;
-            margin-bottom: 40px;
-            font-weight: bold;
-        }
+    /* Buttons are fixed to viewport so they follow the visible area */
+    button {
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      position: fixed;
+      z-index: 999;
+      transition: transform 0.12s ease-out;
+      touch-action: none;
+      -webkit-user-select: none;
+    }
 
-        button {
-            padding: 18px 35px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: fixed; /* Keep buttons fixed for easier coordinate math */
-            z-index: 999;
-            transition: transform 0.1s ease-out;
-        }
+    #yesBtn { background:#ff1493; color:#fff; }
+    #noBtn  { background:#808080; color:#fff; }
 
-        #yesBtn {
-            background-color: #ff1493;
-            color: white;
-            bottom: 80px;
-            left: calc(50% - 110px); /* Positioned to the left of center */
-        }
+    /* initial positions (center bottom with safe-area offsets) */
+    #yesBtn { left: calc(50% - 110px); bottom: calc(20px + var(--safe-bottom)); }
+    #noBtn  { left: calc(50% + 20px); bottom: calc(20px + var(--safe-bottom)); }
 
-        #noBtn {
-            background-color: #808080;
-            color: white;
-            bottom: 80px;
-            left: calc(50% + 20px); /* Positioned to the right of center */
-        }
+    .success {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#ff1493 0%,#ff69b4 100%); color: white; z-index: 1000;
+      padding: 20px;
+    }
+    .success.show { display: flex; flex-direction: column; }
 
-        /* Success Screen */
-        .success {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
-            z-index: 1000;
-            color: white;
-            padding: 20px;
-            overflow-y: auto; /* Allow scrolling if screen is small */
-        }
+    .hearts { font-size: 3rem; margin-bottom: 10px; }
 
-        .success.show { display: flex; }
-
-        .hearts { font-size: 3rem; margin-bottom: 10px; }
-
-        .voucher-container {
-            position: relative;
-            width: 100%;
-            max-width: 350px;
-            background: #fffacd;
-            border: 3px dashed #d4af37;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            color: #333;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        .voucher-stamp {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #ff1493;
-            color: white;
-            padding: 10px;
-            border-radius: 50%;
-            transform: rotate(15deg);
-            font-weight: bold;
-            font-size: 0.8rem;
-            border: 2px solid white;
-        }
-
-        .video-container {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .dancing-video {
-            border-radius: 10px;
-            width: 45%;
-            max-width: 150px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        @media (max-width: 350px) {
-            #yesBtn { left: 20px; }
-            #noBtn { right: 20px; left: auto; }
-        }
-    </style>
+    @media (max-width: 420px) {
+      #yesBtn { left: 16px; bottom: calc(12px + var(--safe-bottom)); }
+      #noBtn  { right: 16px; left: auto; bottom: calc(12px + var(--safe-bottom)); }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>❤️ Will You Be My Valentine? ❤️</h1>
+    <div class="question">Choose wisely...</div>
+  </div>
 
-    <div class="container">
-        <h1>❤️ Will You Be My Valentine? ❤️</h1>
-        <div class="question">Choose wisely...</div>
-    </div>
+  <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
+  <button id="noBtn" aria-label="No, I won't">No</button>
 
-    <button id="yesBtn">Yes! 💕</button>
-    <button id="noBtn">No</button>
+  <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="hearts">💕 💕 💕</div>
+    <h2>Yay! I knew it! 🥰</h2>
+    <p style="margin-top:12px;">I'll see you on the 14th! ❤️</p>
+  </div>
 
-    <div class="success">
-        <div class="hearts">💕 💕 💕</div>
-        <h2 style="text-align: center;">Yay! I knew it! 🥰</h2>
-        
-        <div class="voucher-container">
-            <div class="voucher-stamp">VALID</div>
-            <p style="font-weight: bold; color: #d02090;">🎁 VALENTINE'S VOUCHER</p>
-            <p style="margin: 10px 0;">Redeemable for: <b>CHOCOLATE OF CHOICE 🍫</b></p>
-            <div style="background: white; border: 1px solid #d4af37; padding: 5px; font-family: monospace;">CODE: LOVE2026</div>
-        </div>
+  <script>
+    (function () {
+      const noBtn = document.getElementById('noBtn');
+      const yesBtn = document.getElementById('yesBtn');
+      const success = document.getElementById('successScreen');
 
-        <div class="video-container">
-            <video id="video1" class="dancing-video" muted playsinline loop>
-                <source src="haru.mp4" type="video/mp4">
-            </video>
-            <video id="video2" class="dancing-video" muted playsinline loop>
-                <source src="nami.mp4" type="video/mp4">
-            </video>
-        </div>
-        <p style="margin-top: 15px; font-size: 0.9rem;">I'll see you on the 14th! ❤️</p>
-    </div>
+      const THROTTLE_MS = 180;
+      const EDGE_PADDING = 12; // px from viewport edges
+      let lastMove = 0;
 
-    <script>
-        const noBtn = document.getElementById('noBtn');
-        const yesBtn = document.getElementById('yesBtn');
-        const successScreen = document.querySelector('.success');
-        const video1 = document.getElementById('video1');
-        const video2 = document.getElementById('video2');
-
-        let lastMove = 0;
-
-        function moveButton(e) {
-            // Prevent rapid-fire movement
-            const now = Date.now();
-            if (now - lastMove < 300) return;
-            lastMove = now;
-
-            // Padding from screen edges
-            const padding = 30;
-            const btnWidth = noBtn.offsetWidth;
-            const btnHeight = noBtn.offsetHeight;
-
-            // Calculate random coordinates within the viewport
-            const maxX = window.innerWidth - btnWidth - padding;
-            const maxY = window.innerHeight - btnHeight - padding;
-
-            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
-            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
-
-            // Apply style directly
-            noBtn.style.left = randomX + 'px';
-            noBtn.style.top = randomY + 'px';
-            noBtn.style.bottom = 'auto';
+      // Use visualViewport when available for accurate visible area on mobile
+      function getViewportSize() {
+        const vv = window.visualViewport;
+        if (vv) {
+          return { width: vv.width, height: vv.height, offsetLeft: vv.offsetLeft, offsetTop: vv.offsetTop };
         }
+        return { width: window.innerWidth, height: window.innerHeight, offsetLeft: 0, offsetTop: 0 };
+      }
 
-        // Handle both touch and mouse
-        noBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            moveButton();
-        });
+      function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-        noBtn.addEventListener('mouseover', moveButton);
+      function moveNoButton() {
+        const now = Date.now();
+        if (now - lastMove < THROTTLE_MS) return;
+        lastMove = now;
 
-        yesBtn.addEventListener('click', () => {
-            successScreen.classList.add('show');
-            video1.play();
-            video2.play();
-        });
+        const btnW = noBtn.offsetWidth;
+        const btnH = noBtn.offsetHeight;
 
-        // Ensure "Yes" also works on touch
-        yesBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            successScreen.classList.add('show');
-            video1.play();
-            video2.play();
-        });
-    </script>
+        const vp = getViewportSize();
+        const vw = vp.width;
+        const vh = vp.height;
+
+        // compute safe area using CSS env safe-area-inset values if present
+        const safeLeft = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-left')) || 0;
+        const safeRight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-right')) || 0;
+        const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0;
+        const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
+
+        const minX = EDGE_PADDING + safeLeft;
+        const maxX = Math.max(minX, vw - btnW - EDGE_PADDING - safeRight);
+        const minY = EDGE_PADDING + safeTop;
+        const maxY = Math.max(minY, vh - btnH - EDGE_PADDING - safeBottom);
+
+        // random position inside safe area
+        const randomX = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+        const randomY = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+
+        // apply using top/left and clear bottom/right to avoid CSS conflicts
+        noBtn.style.left = (randomX + (vp.offsetLeft || 0)) + 'px';
+        noBtn.style.top  = (randomY + (vp.offsetTop || 0)) + 'px';
+        noBtn.style.bottom = 'auto';
+        noBtn.style.right = 'auto';
+
+        // small pop animation
+        noBtn.style.transform = 'scale(1.06)';
+        setTimeout(() => noBtn.style.transform = 'scale(1)', 120);
+      }
+
+      // pointerenter for mouse/pen hover; pointerdown for clicks; touchstart for touch
+      noBtn.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse' || e.pointerType === 'pen') moveNoButton();
+      });
+
+      noBtn.addEventListener('pointerdown', (e) => {
+        // prevent focus outline and accidental click
+        e.preventDefault();
+        moveNoButton();
+      });
+
+      // touchstart fallback (some browsers still prefer touch events)
+      noBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        moveNoButton();
+      }, { passive: false });
+
+      // If user somehow manages to click "No", keep it playful but allow it
+      noBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // move once more and then show a cheeky message if clicked twice quickly
+        moveNoButton();
+      });
+
+      yesBtn.addEventListener('click', () => {
+        success.classList.add('show');
+        success.setAttribute('aria-hidden', 'false');
+      });
+
+      yesBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        success.classList.add('show');
+        success.setAttribute('aria-hidden', 'false');
+      }, { passive: false });
+
+      // On resize or visualViewport change, ensure the no button remains visible
+      function clampNoButtonToViewport() {
+        const rect = noBtn.getBoundingClientRect();
+        const vp = getViewportSize();
+        const vw = vp.width;
+        const vh = vp.height;
+        const btnW = noBtn.offsetWidth;
+        const btnH = noBtn.offsetHeight;
+
+        const safeLeft = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-left')) || 0;
+        const safeRight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-right')) || 0;
+        const safeTop = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0;
+        const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
+
+        const minX = EDGE_PADDING + safeLeft;
+        const maxX = Math.max(minX, vw - btnW - EDGE_PADDING - safeRight);
+        const minY = EDGE_PADDING + safeTop;
+        const maxY = Math.max(minY, vh - btnH - EDGE_PADDING - safeBottom);
+
+        const left = clamp(rect.left - (vp.offsetLeft || 0), minX, maxX);
+        const top  = clamp(rect.top  - (vp.offsetTop || 0), minY, maxY);
+
+        noBtn.style.left = (left + (vp.offsetLeft || 0)) + 'px';
+        noBtn.style.top  = (top  + (vp.offsetTop || 0)) + 'px';
+        noBtn.style.bottom = 'auto';
+      }
+
+      // Listen to resize and visualViewport changes
+      window.addEventListener('resize', clampNoButtonToViewport);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', clampNoButtonToViewport);
+        window.visualViewport.addEventListener('scroll', clampNoButtonToViewport);
+      }
+
+      // initial clamp (in case CSS placed it off-screen)
+      window.requestAnimationFrame(clampNoButtonToViewport);
+    })();
+  </script>
 </body>
 </html>
