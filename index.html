@@ -12,21 +12,22 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #ffe4e1; /* Rose White */
-            font-family: 'Arial', sans-serif;
-            overflow: hidden; /* Prevents scrolling if button moves off screen */
+            background-color: #ffe4e1;
+            font-family: sans-serif;
+            overflow: hidden;
+            touch-action: manipulation; /* Improves touch response on mobile */
         }
 
         h1 {
             color: #d02090;
             text-align: center;
-            padding: 20px;
+            margin-bottom: 30px;
         }
 
-        .buttons {
+        .container {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 50vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -35,24 +36,24 @@
         button {
             padding: 15px 30px;
             font-size: 1.2rem;
-            border-radius: 20px;
+            border-radius: 50px;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            transition: transform 0.2s ease;
+            position: absolute; /* Both are absolute now for better control */
         }
 
         #yesBtn {
             background-color: #ff69b4;
             color: white;
-            margin-right: 20px;
-            z-index: 10;
+            transform: translateX(-70px); /* Start slightly left of center */
         }
 
         #noBtn {
             background-color: #808080;
             color: white;
-            position: absolute;
+            transform: translateX(70px); /* Start slightly right of center */
+            transition: 0.1s; /* Makes the jump feel snappier */
         }
     </style>
 </head>
@@ -60,40 +61,15 @@
 
     <h1>Will you be my Valentine? ❤️</h1>
 
-    <div class="buttons">
+    <div class="container">
         <button id="yesBtn" onclick="celebrate()">Yes!</button>
         <button id="noBtn">No</button>
     </div>
 
     <script>
         const noBtn = document.getElementById('noBtn');
-        const yesBtn = document.getElementById('yesBtn');
 
-        // This function moves the button
         function moveButton() {
-            // Calculate random positions within the screen bounds
-            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
-            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
-            
-            noBtn.style.left = `${x}px`;
-            noBtn.style.top = `${y}px`;
-        }
-
-        // For iPhone/Mobile: Triggered on touch
-        noBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Stops the actual "click" from happening
-            moveButton();
-        });
-
-        // For Desktop: Triggered on hover
-        noBtn.addEventListener('mouseover', moveButton);
-
-        function celebrate() {
-            document.body.innerHTML = `
-                <h1 style="color: #ff69b4;">Yay! I knew you'd say yes! 🥰</h1>
-                <p style="font-size: 50px;">💖✨🌹</p>
-            `;
-        }
-    </script>
-</body>
-</html>
+            // Get screen dimensions minus button size so it doesn't go off-screen
+            const padding = 20;
+            const maxWidth = window.innerWidth
