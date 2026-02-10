@@ -176,20 +176,30 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 20px;
             width: 100%;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .dancing-video {
             border-radius: 20px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            display: none;
             max-width: 100%;
             height: auto;
+            display: block;
         }
 
-        .dancing-video.active {
-            display: block;
+        @media (max-width: 700px) {
+            .video-container {
+                gap: 10px;
+            }
+
+            .dancing-video {
+                width: 100% !important;
+                max-width: 320px;
+                height: auto !important;
+            }
         }
     </style>
 </head>
@@ -211,10 +221,10 @@
         <div style="font-size: 1.5rem; margin-bottom: 40px;">You made me so happy! 😘</div>
         
         <div class="video-container">
-            <video id="video1" class="dancing-video" width="300" height="500" muted playsinline>
+            <video id="video1" class="dancing-video" width="280" height="480" muted playsinline loop>
                 <source src="haru.mp4" type="video/mp4">
             </video>
-            <video id="video2" class="dancing-video" width="300" height="500" muted playsinline>
+            <video id="video2" class="dancing-video" width="280" height="480" muted playsinline loop>
                 <source src="nami.mp4" type="video/mp4">
             </video>
         </div>
@@ -244,13 +254,13 @@
             const buttonHeight = 50;
             
             const minX = padding;
-            const maxX = window.innerWidth - buttonWidth - padding;
-            const minY = window.innerHeight * 0.35; // Start below question
-            const maxY = window.innerHeight - 120; // Leave space at bottom
+            const maxX = Math.max(window.innerWidth - buttonWidth - padding, padding + 100);
+            const minY = Math.max(window.innerHeight * 0.35, padding); // Start below question
+            const maxY = Math.max(window.innerHeight - 120, minY + 50); // Leave space at bottom
 
-            // Generate random position
-            const randomX = Math.floor(Math.random() * (maxX - minX) + minX);
-            const randomY = Math.floor(Math.random() * (maxY - minY) + minY);
+            // Generate random position (clamped to stay on screen)
+            const randomX = Math.max(minX, Math.min(Math.floor(Math.random() * (maxX - minX) + minX), maxX));
+            const randomY = Math.max(minY, Math.min(Math.floor(Math.random() * (maxY - minY) + minY), maxY));
 
             // Apply new position immediately
             noBtn.style.position = 'fixed';
@@ -261,33 +271,14 @@
             isMoving = false;
         }
 
-        function playVideos() {
-            // Start with video1
-            video1.classList.add('active');
-            video2.classList.remove('active');
-            video1.currentTime = 0;
-            video1.play();
-        }
-
         function celebrate() {
             successScreen.classList.add('show');
-            playVideos();
-        }
-
-        // Video transition logic
-        video1.addEventListener('ended', () => {
-            video1.classList.remove('active');
-            video2.classList.add('active');
-            video2.currentTime = 0;
-            video2.play();
-        });
-
-        video2.addEventListener('ended', () => {
-            video2.classList.remove('active');
-            video1.classList.add('active');
+            // Play both videos
             video1.currentTime = 0;
+            video2.currentTime = 0;
             video1.play();
-        });
+            video2.play();
+        }
 
         // Prevent default touch behaviors
         document.addEventListener('touchmove', (e) => {
