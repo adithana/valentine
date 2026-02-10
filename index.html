@@ -7,15 +7,9 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
     html, body {
-      height: 100vh;
-      width: 100%;
-      overflow: hidden;
-      overscroll-behavior: none;
+      height: 100vh; width: 100%; overflow: hidden; overscroll-behavior: none;
       background: linear-gradient(135deg,#ffe4e1 0%,#ffb6c1 100%);
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -30,46 +24,52 @@
       text-align: center;
       padding: calc(16px + var(--safe-top)) 20px 20px;
       z-index: 10;
-      pointer-events: none; /* prevents accidental pointer capture by container while chasing */
+      pointer-events: none;
     }
 
-    h1 { color: #d02090; font-size: 1.8rem; margin-bottom: 10px; pointer-events: auto; }
-    .question { font-size: 1.05rem; color: #c71585; margin-bottom: 36px; font-weight: bold; pointer-events: auto; }
+    h1 { color: #d02090; font-size: 1.9rem; margin-bottom: 10px; pointer-events: auto; }
+    .question { font-size: 1.05rem; color: #c71585; margin-bottom: 18px; font-weight: bold; pointer-events: auto; }
 
+    /* Buttons are fixed to viewport */
     button {
-      padding: 14px 28px;
-      font-size: 1.05rem;
-      border-radius: 999px;
-      border: none;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-      position: fixed;
-      z-index: 999;
-      transition: transform 0.12s ease-out;
-      touch-action: none;
-      -webkit-user-select: none;
+      border: none; border-radius: 999px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+      position: fixed; z-index: 999; transition: transform 0.12s ease-out; touch-action: none;
+      -webkit-user-select: none; will-change: left, top, transform;
     }
 
-    #yesBtn { background:#ff1493; color:#fff; }
-    #noBtn  { background:#808080; color:#fff; }
+    /* Yes button smaller and placed bottom-left by default */
+    #yesBtn {
+      background:#ff1493; color:#fff;
+      padding: 14px 28px; font-size: 1.05rem;
+      left: 18px; bottom: calc(18px + var(--safe-bottom));
+      cursor: pointer;
+    }
 
-    /* initial positions (center bottom with safe-area offsets) */
-    #yesBtn { left: calc(50% - 110px); bottom: calc(20px + var(--safe-bottom)); }
-    #noBtn  { left: calc(50% + 20px); bottom: calc(20px + var(--safe-bottom)); }
+    /* No button larger and centered under the text initially */
+    #noBtn {
+      background:#808080; color:#fff;
+      padding: 20px 44px; font-size: 1.15rem;
+      min-width: 220px; /* ensure it's visibly larger */
+      height: auto;
+      left: 50%; /* we'll translate to center it */
+      transform: translateX(-50%);
+      top: calc(50% + 40px); /* roughly under the text; JS will clamp it */
+      cursor: default;
+    }
+
+    /* visually indicate non-clickable */
+    #noBtn.nonclickable { opacity: 0.98; pointer-events: auto; } /* pointer-events handled in JS */
 
     .success {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-      background: linear-gradient(135deg,#ff1493 0%,#ff69b4 100%); color: white; z-index: 1000;
-      padding: 20px;
+      background: linear-gradient(135deg,#ff1493 0%,#ff69b4 100%); color: white; z-index: 1000; padding: 20px;
     }
     .success.show { display: flex; flex-direction: column; }
-
     .hearts { font-size: 3rem; margin-bottom: 10px; }
 
     @media (max-width: 420px) {
-      #yesBtn { left: 16px; bottom: calc(12px + var(--safe-bottom)); }
-      #noBtn  { right: 16px; left: auto; bottom: calc(12px + var(--safe-bottom)); }
+      #yesBtn { left: 12px; bottom: calc(12px + var(--safe-bottom)); }
+      #noBtn  { min-width: 160px; padding: 18px 28px; font-size: 1.05rem; top: calc(50% + 48px); }
     }
   </style>
 </head>
@@ -80,7 +80,7 @@
   </div>
 
   <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
-  <button id="noBtn" aria-label="No, I won't">No</button>
+  <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
 
   <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="hearts">💕 💕 💕</div>
@@ -96,9 +96,10 @@
       const container = document.getElementById('mainContainer');
 
       const THROTTLE_MS = 160;
-      const EDGE_PADDING = 12; // px from viewport edges
-      const MAX_ATTEMPTS = 30; // attempts to find a non-overlapping spot
+      const EDGE_PADDING = 12;
+      const MAX_ATTEMPTS = 40;
       let lastMove = 0;
+      let animating = false;
 
       function getViewport() {
         const vv = window.visualViewport;
@@ -106,9 +107,7 @@
         return { width: window.innerWidth, height: window.innerHeight, offsetLeft: 0, offsetTop: 0 };
       }
 
-      function rectFromEl(el) {
-        return el.getBoundingClientRect();
-      }
+      function rectFromEl(el) { return el.getBoundingClientRect(); }
 
       function overlaps(r1, r2, gap = 8) {
         return !(r1.right + gap < r2.left || r1.left - gap > r2.right || r1.bottom + gap < r2.top || r1.top - gap > r2.bottom);
@@ -116,19 +115,50 @@
 
       function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-      function moveNoButton() {
-        const now = Date.now();
-        if (now - lastMove < THROTTLE_MS) return;
-        lastMove = now;
+      // animate using requestAnimationFrame with easeOutCubic
+      function animateTo(targetLeft, targetTop, duration = 420) {
+        if (animating) return;
+        animating = true;
 
-        const btnW = noBtn.offsetWidth;
-        const btnH = noBtn.offsetHeight;
+        const startRect = noBtn.getBoundingClientRect();
+        const vp = getViewport();
+        const startLeft = startRect.left - (vp.offsetLeft || 0);
+        const startTop  = startRect.top  - (vp.offsetTop || 0);
 
+        const deltaX = targetLeft - startLeft;
+        const deltaY = targetTop - startTop;
+        const startTime = performance.now();
+
+        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const t = clamp(elapsed / duration, 0, 1);
+          const eased = easeOutCubic(t);
+          const curLeft = startLeft + deltaX * eased;
+          const curTop  = startTop  + deltaY * eased;
+
+          noBtn.style.left = (curLeft + (vp.offsetLeft || 0)) + 'px';
+          noBtn.style.top  = (curTop  + (vp.offsetTop || 0)) + 'px';
+          noBtn.style.bottom = 'auto';
+          noBtn.style.right = 'auto';
+          noBtn.style.transform = 'translateX(0) scale(' + (1 + 0.04 * (1 - Math.abs(0.5 - eased) * 2)) + ')';
+
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            noBtn.style.transform = 'translateX(0) scale(1)';
+            animating = false;
+          }
+        }
+        requestAnimationFrame(step);
+      }
+
+      function findSafePosition(btnW, btnH) {
         const vp = getViewport();
         const vw = vp.width;
         const vh = vp.height;
 
-        // safe-area insets (CSS env fallback handled by CSS; here we read computed values if present)
         const cs = getComputedStyle(document.documentElement);
         const safeLeft = parseFloat(cs.getPropertyValue('--safe-left')) || 0;
         const safeRight = parseFloat(cs.getPropertyValue('--safe-right')) || 0;
@@ -144,38 +174,39 @@
         const containerRect = rectFromEl(container);
 
         let attempt = 0;
-        let chosenX = minX;
-        let chosenY = minY;
-        let candidateRect;
-
-        do {
+        while (attempt < MAX_ATTEMPTS) {
           attempt++;
-          chosenX = Math.floor(Math.random() * (maxX - minX + 1)) + minX;
-          chosenY = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+          // bias positions toward center under the container for initial feel
+          const centerBiasX = Math.floor((maxX + minX) / 2);
+          const jitterX = Math.floor((Math.random() - 0.5) * (maxX - minX) * 0.6);
+          const chosenX = clamp(centerBiasX + jitterX, minX, maxX);
 
-          // account for visualViewport offsets
+          // allow vertical spread but keep generally under the container
+          const chosenY = Math.floor(Math.random() * (maxY - minY + 1)) + minY;
+
           const left = chosenX + (vp.offsetLeft || 0);
-          const top = chosenY + (vp.offsetTop || 0);
-          candidateRect = {
-            left: left,
-            top: top,
-            right: left + btnW,
-            bottom: top + btnH
-          };
+          const top  = chosenY + (vp.offsetTop || 0);
+          const candidateRect = { left, top, right: left + btnW, bottom: top + btnH };
 
-          // stop if not overlapping yes button and not overlapping main container
-          if (!overlaps(candidateRect, yesRect, 10) && !overlaps(candidateRect, containerRect, 8)) break;
-        } while (attempt < MAX_ATTEMPTS);
+          if (!overlaps(candidateRect, yesRect, 12) && !overlaps(candidateRect, containerRect, 10)) {
+            return { x: chosenX, y: chosenY };
+          }
+        }
+        // fallback: center under container
+        const fallbackX = clamp(Math.floor((vp.width - btnW) / 2), minX, maxX);
+        const fallbackY = clamp(Math.floor(vp.height * 0.55), minY, maxY);
+        return { x: fallbackX, y: fallbackY };
+      }
 
-        // apply position using top/left and clear bottom/right to avoid conflicts
-        noBtn.style.left = (chosenX + (vp.offsetLeft || 0)) + 'px';
-        noBtn.style.top  = (chosenY + (vp.offsetTop || 0)) + 'px';
-        noBtn.style.bottom = 'auto';
-        noBtn.style.right = 'auto';
+      function moveNoButton() {
+        const now = Date.now();
+        if (now - lastMove < THROTTLE_MS) return;
+        lastMove = now;
 
-        // small pop animation
-        noBtn.style.transform = 'scale(1.06)';
-        setTimeout(() => noBtn.style.transform = 'scale(1)', 120);
+        const btnW = noBtn.offsetWidth;
+        const btnH = noBtn.offsetHeight;
+        const pos = findSafePosition(btnW, btnH);
+        animateTo(pos.x, pos.y, 420);
       }
 
       // pointerenter for mouse/pen hover; pointerdown for clicks; touchstart for touch
@@ -193,24 +224,14 @@
         moveNoButton();
       }, { passive: false });
 
-      // If user somehow clicks "No", keep it playful but allow it
+      // Intercept clicks and make the button non-clickable
       noBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         moveNoButton();
       });
 
-      yesBtn.addEventListener('click', () => {
-        success.classList.add('show');
-        success.setAttribute('aria-hidden', 'false');
-      });
-
-      yesBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        success.classList.add('show');
-        success.setAttribute('aria-hidden', 'false');
-      }, { passive: false });
-
-      // Ensure the no button stays visible on resize / visualViewport changes
+      // Ensure the No button remains visible after viewport changes
       function clampNoButtonToViewport() {
         const rect = noBtn.getBoundingClientRect();
         const vp = getViewport();
@@ -244,7 +265,30 @@
         window.visualViewport.addEventListener('scroll', clampNoButtonToViewport);
       }
 
-      // initial clamp (in case CSS placed it off-screen)
+      // Yes button opens success
+      yesBtn.addEventListener('click', () => {
+        success.classList.add('show');
+        success.setAttribute('aria-hidden', 'false');
+      });
+      yesBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        success.classList.add('show');
+        success.setAttribute('aria-hidden', 'false');
+      }, { passive: false });
+
+      // initial placement: center the No button under the container
+      window.addEventListener('load', () => {
+        const vp = getViewport();
+        const btnW = noBtn.offsetWidth;
+        const btnH = noBtn.offsetHeight;
+        const centerX = Math.floor((vp.width - btnW) / 2);
+        const centerY = Math.floor(vp.height * 0.55);
+        noBtn.style.left = (centerX + (vp.offsetLeft || 0)) + 'px';
+        noBtn.style.top  = (centerY + (vp.offsetTop || 0)) + 'px';
+        noBtn.style.transform = 'translateX(0)';
+      });
+
+      // initial clamp
       window.requestAnimationFrame(clampNoButtonToViewport);
     })();
   </script>
