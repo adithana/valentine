@@ -9,6 +9,8 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -21,7 +23,9 @@
             background: linear-gradient(135deg, #ffe4e1 0%, #ffb6c1 100%);
             font-family: 'Arial', sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
         }
 
         .container {
@@ -183,41 +187,85 @@
         const noBtn = document.getElementById('noBtn');
         const yesBtn = document.getElementById('yesBtn');
         const successScreen = document.querySelector('.success');
+        let isMoving = false;
 
         function moveButton() {
-            // Get screen dimensions
-            const maxX = window.innerWidth - noBtn.offsetWidth - 20;
-            const maxY = window.innerHeight - noBtn.offsetHeight - 20;
+            if (isMoving) return; // Prevent rapid consecutive moves
+            isMoving = true;
+
+            // Ensure button uses fixed positioning
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = 'auto';
+            noBtn.style.top = 'auto';
+            noBtn.style.transform = 'none';
+
+            // Get safe boundaries with padding
+            const padding = 60;
+            const buttonWidth = 80;
+            const buttonHeight = 50;
+            
+            const minX = padding;
+            const maxX = Math.max(window.innerWidth - buttonWidth - padding, minX + 100);
+            const minY = Math.max(window.innerHeight / 3, padding);
+            const maxY = Math.max(window.innerHeight - buttonHeight - padding, minY + 100);
 
             // Generate random position
-            const randomX = Math.random() * maxX;
-            const randomY = Math.random() * maxY;
+            const randomX = Math.floor(Math.random() * (maxX - minX) + minX);
+            const randomY = Math.floor(Math.random() * (maxY - minY) + minY);
 
-            // Apply new position
-            noBtn.style.position = 'fixed';
-            noBtn.style.left = randomX + 'px';
-            noBtn.style.top = randomY + 'px';
-            noBtn.style.transform = 'none';
+            // Apply new position with slight delay for mobile
+            setTimeout(() => {
+                noBtn.style.left = randomX + 'px';
+                noBtn.style.top = randomY + 'px';
+                isMoving = false;
+            }, 50);
         }
 
         function celebrate() {
             successScreen.classList.add('show');
         }
 
-        // Move button on hover (desktop)
+        // Desktop: Move on hover
         noBtn.addEventListener('mouseenter', moveButton);
 
-        // Move button on touch attempt (mobile)
+        // Mobile: Move on any touch/click attempt
         noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            moveButton();
+        });
+
+        noBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        noBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            moveButton();
+        });
+
+        noBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             moveButton();
         });
 
-        // Move button on click attempt (as fallback)
-        noBtn.addEventListener('click', moveButton);
+        // Yes button - works normally
+        yesBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            celebrate();
+        });
 
-        // Yes button functionality
-        yesBtn.addEventListener('click', celebrate);
+        yesBtn.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            celebrate();
+        });
+
+        // Initial position adjustment on load
+        window.addEventListener('load', () => {
+            noBtn.style.position = 'fixed';
+        });
     </script>
 </body>
 </html>
