@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Will You Be My Valentine?</title>
     <style>
         * {
@@ -13,52 +13,39 @@
             user-select: none;
         }
 
-        body {
+        /* Crucial for iPhone: prevents the page from bouncing or refreshing while chasing the button */
+        html, body {
+            overscroll-behavior: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ffe4e1 0%, #ffb6c1 100%);
+            font-family: 'Arial', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            width: 100vw;
-            background: linear-gradient(135deg, #ffe4e1 0%, #ffb6c1 100%);
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
             touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
         }
 
         .container {
             text-align: center;
             z-index: 10;
+            padding: 20px;
         }
 
         h1 {
             color: #d02090;
-            font-size: 2rem;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-size: 1.8rem;
+            margin-bottom: 10px;
         }
 
         .question {
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             color: #c71585;
             margin-bottom: 40px;
             font-weight: bold;
-        }
-
-        .buttons-wrapper {
-            position: fixed;
-            bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            height: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            pointer-events: auto;
         }
 
         button {
@@ -69,39 +56,26 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: transform 0.15s ease-out, box-shadow 0.15s;
-            z-index: 9999;
-            position: fixed;
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: block !important;
-        }
-
-        button:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            position: fixed; /* Keep buttons fixed for easier coordinate math */
+            z-index: 999;
+            transition: transform 0.1s ease-out;
         }
 
         #yesBtn {
             background-color: #ff1493;
             color: white;
-            z-index: 9999;
-        }
-
-        #yesBtn:hover {
-            background-color: #ff0080;
+            bottom: 80px;
+            left: calc(50% - 110px); /* Positioned to the left of center */
         }
 
         #noBtn {
             background-color: #808080;
             color: white;
-            z-index: 9999;
+            bottom: 80px;
+            left: calc(50% + 20px); /* Positioned to the right of center */
         }
 
-        #noBtn:hover {
-            background-color: #696969;
-        }
-
+        /* Success Screen */
         .success {
             position: fixed;
             top: 0;
@@ -113,184 +87,61 @@
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
-            z-index: 100;
+            z-index: 1000;
             color: white;
-            font-size: 2rem;
-            animation: fadeIn 0.5s ease-in;
+            padding: 20px;
+            overflow-y: auto; /* Allow scrolling if screen is small */
         }
 
-        .success.show {
-            display: flex;
-        }
+        .success.show { display: flex; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.2); }
-            50% { transform: scale(1); }
-        }
-
-        .hearts {
-            font-size: 4rem;
-            animation: heartBeat 0.6s ease-in-out;
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .question {
-                font-size: 1.1rem;
-                margin-bottom: 30px;
-            }
-
-            button {
-                padding: 15px 25px;
-                font-size: 1rem;
-            }
-
-            #yesBtn {
-                transform: translateX(-80px);
-            }
-
-            #yesBtn:hover {
-                transform: translateX(-80px) scale(1.1);
-            }
-
-            #noBtn {
-                transform: translateX(80px);
-            }
-
-            .dancing-video {
-                width: 100% !important;
-                height: auto !important;
-                max-width: 320px;
-            }
-        }
-
-        .video-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            width: 100%;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .dancing-video {
-            border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
+        .hearts { font-size: 3rem; margin-bottom: 10px; }
 
         .voucher-container {
             position: relative;
-            width: 90%;
-            max-width: 450px;
-            background: linear-gradient(135deg, #fff8dc 0%, #fffacd 100%);
+            width: 100%;
+            max-width: 350px;
+            background: #fffacd;
             border: 3px dashed #d4af37;
             border-radius: 15px;
-            padding: 30px;
-            margin: 20px auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            animation: voucher-appear 0.6s ease-in;
-        }
-
-        @keyframes voucher-appear {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .voucher-header {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #d02090;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .voucher-text {
+            padding: 20px;
             margin: 20px 0;
             color: #333;
-        }
-
-        .voucher-code {
-            background: white;
-            border: 2px solid #d4af37;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .voucher-validity {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 15px;
-            font-style: italic;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         .voucher-stamp {
             position: absolute;
-            top: -15px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
+            top: -10px;
+            right: -10px;
             background: #ff1493;
             color: white;
-            border: 3px solid white;
+            padding: 10px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            transform: rotate(15deg);
             font-weight: bold;
-            font-size: 0.9rem;
-            transform: rotate(-25deg);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            animation: stamp-bounce 0.8s ease-in-out;
+            font-size: 0.8rem;
+            border: 2px solid white;
         }
 
-        @keyframes stamp-bounce {
-            0% {
-                transform: rotate(-25deg) scale(0);
-            }
-            50% {
-                transform: rotate(-25deg) scale(1.1);
-            }
-            100% {
-                transform: rotate(-25deg) scale(1);
-            }
+        .video-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px;
         }
 
-        @media (max-width: 700px) {
-            .video-container {
-                gap: 10px;
-            }
+        .dancing-video {
+            border-radius: 10px;
+            width: 45%;
+            max-width: 150px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
 
-            .dancing-video {
-                width: 100% !important;
-                max-width: 320px;
-                height: auto !important;
-            }
+        @media (max-width: 350px) {
+            #yesBtn { left: 20px; }
+            #noBtn { right: 20px; left: auto; }
         }
     </style>
 </head>
@@ -298,45 +149,32 @@
 
     <div class="container">
         <h1>❤️ Will You Be My Valentine? ❤️</h1>
-        <div class="question">Let me know!</div>
+        <div class="question">Choose wisely...</div>
     </div>
 
-    <div class="buttons-wrapper">
-        <button id="yesBtn">Yes! 💕</button>
-        <button id="noBtn">No</button>
-    </div>
+    <button id="yesBtn">Yes! 💕</button>
+    <button id="noBtn">No</button>
 
     <div class="success">
         <div class="hearts">💕 💕 💕</div>
-        <div style="font-size: 2.5rem; margin: 30px 0;">Yay! I knew you'd say yes! 🥰</div>
-        <div style="font-size: 1.2rem; margin-bottom: 40px; color: #333;">Keep this screen handy—it's your voucher for something sweet on the 14th! 🍫</div>
+        <h2 style="text-align: center;">Yay! I knew it! 🥰</h2>
         
         <div class="voucher-container">
             <div class="voucher-stamp">VALID</div>
-            <div class="voucher-content">
-                <div class="voucher-header">🎁 VALENTINE'S VOUCHER 🎁</div>
-                <div class="voucher-text">
-                    <p style="font-size: 1.1rem; margin: 15px 0;">Redeemable For:</p>
-                    <p style="font-size: 1.3rem; font-weight: bold; color: #8b4513;">🍫 CHOCOLATE OF CHOICE 🍫</p>
-                </div>
-                <div class="voucher-code">
-                    <span style="font-size: 0.9rem; color: #666;">Code:</span>
-                    <span style="font-family: monospace; font-size: 1.2rem; font-weight: bold; letter-spacing: 2px;">LOVE2026</span>
-                </div>
-                <div class="voucher-validity">
-                    <span>Valid Until: February 14, 2026</span>
-                </div>
-            </div>
+            <p style="font-weight: bold; color: #d02090;">🎁 VALENTINE'S VOUCHER</p>
+            <p style="margin: 10px 0;">Redeemable for: <b>CHOCOLATE OF CHOICE 🍫</b></p>
+            <div style="background: white; border: 1px solid #d4af37; padding: 5px; font-family: monospace;">CODE: LOVE2026</div>
         </div>
-        
+
         <div class="video-container">
-            <video id="video1" class="dancing-video" width="280" height="480" muted playsinline loop>
+            <video id="video1" class="dancing-video" muted playsinline loop>
                 <source src="haru.mp4" type="video/mp4">
             </video>
-            <video id="video2" class="dancing-video" width="280" height="480" muted playsinline loop>
+            <video id="video2" class="dancing-video" muted playsinline loop>
                 <source src="nami.mp4" type="video/mp4">
             </video>
         </div>
+        <p style="margin-top: 15px; font-size: 0.9rem;">I'll see you on the 14th! ❤️</p>
     </div>
 
     <script>
@@ -345,136 +183,54 @@
         const successScreen = document.querySelector('.success');
         const video1 = document.getElementById('video1');
         const video2 = document.getElementById('video2');
-        let isMoving = false;
-        let lastMoveTime = 0;
 
-        function moveButton() {
+        let lastMove = 0;
+
+        function moveButton(e) {
+            // Prevent rapid-fire movement
             const now = Date.now();
-            // Prevent moves faster than 400ms
-            if (now - lastMoveTime < 400) return;
-            
-            if (isMoving) return;
-            isMoving = true;
-            lastMoveTime = now;
+            if (now - lastMove < 300) return;
+            lastMove = now;
 
-            // Safe boundaries - keep away from edges
-            const padding = 80;
-            const buttonWidth = 100;
-            const buttonHeight = 50;
-            
-            const minX = padding;
-            const maxX = window.innerWidth - buttonWidth - padding;
-            
-            // Ensure max is greater than min
-            if (maxX <= minX) {
-                // Screen too small, center the button
-                noBtn.style.position = 'fixed';
-                noBtn.style.left = (window.innerWidth / 2 - buttonWidth / 2) + 'px';
-                noBtn.style.top = (window.innerHeight / 2) + 'px';
-                noBtn.style.bottom = 'auto';
-                isMoving = false;
-                return;
-            }
+            // Padding from screen edges
+            const padding = 30;
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
 
-            const minY = window.innerHeight * 0.35; // Start below question
-            const maxY = Math.max(window.innerHeight - 150, minY + 50);
+            // Calculate random coordinates within the viewport
+            const maxX = window.innerWidth - btnWidth - padding;
+            const maxY = window.innerHeight - btnHeight - padding;
 
-            // Generate random position
-            const randomX = Math.floor(Math.random() * (maxX - minX)) + minX;
-            const randomY = Math.floor(Math.random() * (maxY - minY)) + minY;
+            const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
 
-            // Apply new position
-            noBtn.style.position = 'fixed';
+            // Apply style directly
             noBtn.style.left = randomX + 'px';
             noBtn.style.top = randomY + 'px';
             noBtn.style.bottom = 'auto';
-
-            isMoving = false;
         }
 
-        function celebrate() {
-            successScreen.classList.add('show');
-            // Play both videos
-            video1.currentTime = 0;
-            video2.currentTime = 0;
-            video1.play();
-            video2.play();
-        }
-
-        // Prevent default touch behaviors
-        document.addEventListener('touchmove', (e) => {
-            if (e.target === noBtn) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Desktop: Move on hover
-        noBtn.addEventListener('mouseenter', moveButton);
-
-        // Mobile: Move on touch
+        // Handle both touch and mouse
         noBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            moveButton();
-        }, { passive: false });
-
-        noBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
             moveButton();
         });
 
-        // Yes button - works normally
-        yesBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            celebrate();
+        noBtn.addEventListener('mouseover', moveButton);
+
+        yesBtn.addEventListener('click', () => {
+            successScreen.classList.add('show');
+            video1.play();
+            video2.play();
         });
 
-        yesBtn.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-
+        // Ensure "Yes" also works on touch
         yesBtn.addEventListener('touchend', (e) => {
-            e.stopPropagation();
-            celebrate();
-        }, { passive: true });
-
-        // Reset button positions on load
-        window.addEventListener('load', () => {
-            const centerX = window.innerWidth / 2;
-            
-            noBtn.style.position = 'fixed';
-            noBtn.style.left = Math.max(50, Math.min(centerX + 80, window.innerWidth - 100)) + 'px';
-            noBtn.style.top = 'auto';
-            noBtn.style.bottom = '60px';
-            noBtn.style.transform = 'none';
-            
-            yesBtn.style.position = 'fixed';
-            yesBtn.style.left = Math.max(50, Math.min(centerX - 80, window.innerWidth - 100)) + 'px';
-            yesBtn.style.top = 'auto';
-            yesBtn.style.bottom = '60px';
-            yesBtn.style.transform = 'none';
+            e.preventDefault();
+            successScreen.classList.add('show');
+            video1.play();
+            video2.play();
         });
-
-        // Also set initial positions immediately
-        const centerX = window.innerWidth / 2;
-        noBtn.style.position = 'fixed';
-        noBtn.style.visibility = 'visible';
-        noBtn.style.opacity = '1';
-        noBtn.style.display = 'block';
-        noBtn.style.left = Math.max(50, Math.min(centerX + 80, window.innerWidth - 100)) + 'px';
-        noBtn.style.top = 'auto';
-        noBtn.style.bottom = '60px';
-        noBtn.style.transform = 'none';
-
-        yesBtn.style.position = 'fixed';
-        yesBtn.style.visibility = 'visible';
-        yesBtn.style.opacity = '1';
-        yesBtn.style.display = 'block';
-        yesBtn.style.left = Math.max(50, Math.min(centerX - 80, window.innerWidth - 100)) + 'px';
-        yesBtn.style.top = 'auto';
-        yesBtn.style.bottom = '60px';
-        yesBtn.style.transform = 'none';
     </script>
 </body>
 </html>
