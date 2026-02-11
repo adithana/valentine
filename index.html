@@ -186,9 +186,23 @@
       const letter = document.querySelector('.letter');
       // prevent accidental taps/clicks from activating newly revealed buttons
       let suppressClicksUntil = 0;
+      // block early touch/pointer events so they don't reach underlying buttons
+      letter.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        suppressClicksUntil = Date.now() + 700;
+      });
+      letter.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        suppressClicksUntil = Date.now() + 700;
+      }, { passive: false });
       letter.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         suppressClicksUntil = Date.now() + 700; // ignore clicks for 700ms after opening
         letter.classList.add('open');
         setTimeout(() => {
@@ -245,7 +259,8 @@
           noBtn.style.top  = (curTop  + (vp.offsetTop || 0)) + 'px';
           noBtn.style.bottom = 'auto';
           noBtn.style.right = 'auto';
-          noBtn.style.transform = 'translateX(0) scale(' + (1 + 0.04 * (1 - Math.abs(0.5 - eased) * 2)) + ')';
+          // respect current scale while animating (small pulse effect)
+          noBtn.style.transform = 'translateX(0) scale(' + (noBtnScale * (1 + 0.04 * (1 - Math.abs(0.5 - eased) * 2))) + ')';
 
           if (t < 1) {
             requestAnimationFrame(step);
@@ -306,6 +321,18 @@
         if (now - lastMove < THROTTLE_MS) return;
         lastMove = now;
 
+        // shrink by ~5% each time the button moves
+        if (noBtn.style.display === 'none') return;
+        noBtnScale *= 0.95;
+        // if it's too small, hide it and stop interacting
+        if (noBtnScale < 0.05) {
+          noBtn.style.display = 'none';
+          noBtn.style.pointerEvents = 'none';
+          return;
+        }
+        // apply immediate scale for visual feedback
+        noBtn.style.transform = 'translateX(0) scale(' + noBtnScale + ')';
+
         const btnW = noBtn.offsetWidth;
         const btnH = noBtn.offsetHeight;
         const pos = findSafePosition(btnW, btnH);
@@ -331,12 +358,7 @@
       noBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        noBtnScale *= 0.9;
-        if (noBtnScale < 0.01) {
-          noBtn.style.display = 'none';
-        } else {
-          noBtn.style.transform = 'translateX(0) scale(' + noBtnScale + ')';
-        }
+        // shrinking is handled each time we move the button
         moveNoButton();
       });
 
@@ -376,12 +398,14 @@
 
       // Yes button opens success
       yesBtn.addEventListener('click', () => {
-        if (Date.now() < suppressClicksUntil) return; // ignore accidental quick clicks
+        // ignore if question screen not yet visible or still in suppression window
+        if (questionScreen.classList.contains('hidden') || Date.now() < suppressClicksUntil) return;
         success.classList.add('show');
         success.setAttribute('aria-hidden', 'false');
       });
       yesBtn.addEventListener('touchend', (e) => {
-        if (Date.now() < suppressClicksUntil) { e.preventDefault(); return; }
+        // ignore if question screen not yet visible or still in suppression window
+        if (questionScreen.classList.contains('hidden') || Date.now() < suppressClicksUntil) { e.preventDefault(); return; }
         e.preventDefault();
         success.classList.add('show');
         success.setAttribute('aria-hidden', 'false');
