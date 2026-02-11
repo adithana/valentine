@@ -184,7 +184,12 @@
 
       // Letter opening animation
       const letter = document.querySelector('.letter');
-      letter.addEventListener('click', () => {
+      // prevent accidental taps/clicks from activating newly revealed buttons
+      let suppressClicksUntil = 0;
+      letter.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        suppressClicksUntil = Date.now() + 700; // ignore clicks for 700ms after opening
         letter.classList.add('open');
         setTimeout(() => {
           letterScreen.classList.add('hidden');
@@ -371,10 +376,12 @@
 
       // Yes button opens success
       yesBtn.addEventListener('click', () => {
+        if (Date.now() < suppressClicksUntil) return; // ignore accidental quick clicks
         success.classList.add('show');
         success.setAttribute('aria-hidden', 'false');
       });
       yesBtn.addEventListener('touchend', (e) => {
+        if (Date.now() < suppressClicksUntil) { e.preventDefault(); return; }
         e.preventDefault();
         success.classList.add('show');
         success.setAttribute('aria-hidden', 'false');
