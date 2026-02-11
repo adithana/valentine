@@ -20,6 +20,66 @@
       --safe-right: env(safe-area-inset-right, 0px);
     }
 
+    .screen {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .screen.hidden { opacity: 0; pointer-events: none; }
+
+    .letter-screen {
+      flex-direction: column;
+    }
+
+    .letter {
+      position: relative; cursor: pointer; animation: float 2s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .envelope {
+      width: 200px; height: 140px; background: #f4e4bc; border: 2px solid #d4af37; position: relative;
+      border-radius: 5px; margin: 0 auto 20px;
+    }
+
+    .envelope::before {
+      content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px;
+      background: #f4e4bc; border: 2px solid #d4af37; border-bottom: none; border-radius: 5px 5px 0 0;
+    }
+
+    .envelope.open::before {
+      transform: rotateX(180deg); transform-origin: top;
+      transition: transform 0.5s ease;
+    }
+
+    .paper {
+      position: absolute; top: 20px; left: 20px; right: 20px; bottom: 20px;
+      background: white; border-radius: 2px; display: none;
+      transform: scaleY(0); transform-origin: bottom;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+
+    .envelope.open .paper {
+      display: block; transform: scaleY(1); opacity: 1;
+    }
+
+    .letter-text {
+      font-size: 1.5rem; color: #d02090; font-weight: bold; text-align: center;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .question-screen {
+      background: linear-gradient(135deg,#ffe4e1 0%,#ffb6c1 100%);
+    }
+
     .container {
       text-align: center;
       padding: calc(16px + var(--safe-top)) 20px 20px;
@@ -37,24 +97,22 @@
       -webkit-user-select: none; will-change: left, top, transform;
     }
 
-    /* Yes button smaller and centered at the bottom */
+    /* Yes button smaller and placed bottom-left beside no */
     #yesBtn {
       background:#ff1493; color:#fff;
       padding: 14px 28px; font-size: 1.05rem;
-      left: 50%; bottom: calc(18px + var(--safe-bottom));
-      transform: translateX(-50%);
+      left: 18px; bottom: calc(18px + var(--safe-bottom));
       cursor: pointer;
     }
 
-    /* No button larger and centered under the text initially */
+    /* No button larger and placed bottom-right beside yes */
     #noBtn {
       background:#808080; color:#fff;
       padding: 20px 44px; font-size: 1.15rem;
       min-width: 220px; /* ensure it's visibly larger */
       height: auto;
-      left: 50%; /* we'll translate to center it */
-      transform: translateX(-50%);
-      top: calc(50% + 40px); /* roughly under the text; JS will clamp it */
+      bottom: calc(18px + var(--safe-bottom));
+      right: 18px;
       cursor: default;
     }
 
@@ -71,17 +129,31 @@
     @media (max-width: 420px) {
       #yesBtn { left: 12px; bottom: calc(12px + var(--safe-bottom)); }
       #noBtn  { min-width: 160px; padding: 18px 28px; font-size: 1.05rem; top: calc(50% + 48px); }
+      .envelope { width: 150px; height: 105px; }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="mainContainer">
-    <h1>❤️ Will You Be My Valentine? ❤️</h1>
-    <div class="question">Choose wisely...</div>
+  <div class="screen letter-screen" id="letterScreen">
+    <div class="letter">
+      <div class="envelope" id="envelope">
+        <div class="paper" id="paper">
+          <div class="letter-text">Will You Be My Valentine? ❤️</div>
+        </div>
+      </div>
+      <div class="letter-text">You got a letter! 💌</div>
+    </div>
   </div>
 
-  <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
-  <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
+  <div class="screen question-screen hidden" id="questionScreen">
+    <div class="container" id="mainContainer">
+      <h1>❤️ Will You Be My Valentine? ❤️</h1>
+      <div class="question">Choose wisely...</div>
+    </div>
+
+    <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
+    <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
+  </div>
 
   <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="hearts">💕 💕 💕</div>
@@ -91,10 +163,22 @@
 
   <script>
     (function () {
+      const letterScreen = document.getElementById('letterScreen');
+      const questionScreen = document.getElementById('questionScreen');
+      const envelope = document.getElementById('envelope');
       const noBtn = document.getElementById('noBtn');
       const yesBtn = document.getElementById('yesBtn');
       const success = document.getElementById('successScreen');
       const container = document.getElementById('mainContainer');
+
+      // Letter opening animation
+      envelope.addEventListener('click', () => {
+        envelope.classList.add('open');
+        setTimeout(() => {
+          letterScreen.classList.add('hidden');
+          questionScreen.classList.remove('hidden');
+        }, 500);
+      });
 
       const THROTTLE_MS = 160;
       const EDGE_PADDING = 12;
@@ -277,15 +361,15 @@
         success.setAttribute('aria-hidden', 'false');
       }, { passive: false });
 
-      // initial placement: center the No button under the container
+      // initial placement: place the No button at bottom-right beside yes
       window.addEventListener('load', () => {
         const vp = getViewport();
         const btnW = noBtn.offsetWidth;
         const btnH = noBtn.offsetHeight;
-        const centerX = Math.floor((vp.width - btnW) / 2);
-        const centerY = Math.floor(vp.height * 0.55);
-        noBtn.style.left = (centerX + (vp.offsetLeft || 0)) + 'px';
-        noBtn.style.top  = (centerY + (vp.offsetTop || 0)) + 'px';
+        const rightX = vp.width - btnW - 18 - (vp.offsetLeft || 0); // 18px padding
+        const bottomY = vp.height - btnH - 18 - (vp.offsetTop || 0) - parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
+        noBtn.style.left = rightX + 'px';
+        noBtn.style.top  = bottomY + 'px';
         noBtn.style.transform = 'translateX(0)';
       });
 
