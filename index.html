@@ -37,11 +37,12 @@
       -webkit-user-select: none; will-change: left, top, transform;
     }
 
-    /* Yes button smaller and placed bottom-left by default */
+    /* Yes button smaller and centered at the bottom */
     #yesBtn {
       background:#ff1493; color:#fff;
       padding: 14px 28px; font-size: 1.05rem;
-      left: 18px; bottom: calc(18px + var(--safe-bottom));
+      left: 50%; bottom: calc(18px + var(--safe-bottom));
+      transform: translateX(-50%);
       cursor: pointer;
     }
 
