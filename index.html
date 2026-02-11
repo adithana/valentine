@@ -1,4 +1,4 @@
-h<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -79,11 +79,11 @@ h<!DOCTYPE html>
       display: flex; justify-content: center; gap: 20px; margin-top: 20px;
     }
 
-    /* Buttons are not fixed anymore */
+    /* Buttons */
     button {
       border: none; border-radius: 999px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
       transition: transform 0.12s ease-out; touch-action: none;
-      -webkit-user-select: none; will-change: transform;
+      -webkit-user-select: none; will-change: left, top, transform;
     }
 
     /* Yes button smaller and placed below question */
@@ -93,12 +93,13 @@ h<!DOCTYPE html>
       cursor: pointer;
     }
 
-    /* No button larger and placed beside yes below question */
+    /* No button larger and fixed to viewport for movement */
     #noBtn {
       background:#808080; color:#fff;
       padding: 20px 44px; font-size: 1.15rem;
       min-width: 220px; /* ensure it's visibly larger */
       height: auto;
+      position: fixed; z-index: 999;
       cursor: default;
     }
 
@@ -148,10 +149,11 @@ h<!DOCTYPE html>
   <div class="screen question-screen hidden" id="questionScreen">
     <div class="container" id="mainContainer">
       <h1>❤️ Will You Be My Valentine? ❤️</h1>
+      <div class="buttons">
+        <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
+        <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
+      </div>
     </div>
-
-    <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
-    <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
   </div>
 
   <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
@@ -162,6 +164,11 @@ h<!DOCTYPE html>
       <video src="nami.mp4" autoplay loop muted></video>
     </div>
     <button class="gift-btn" id="giftBtn">Gift Voucher</button>
+  </div>
+
+  <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
+    <img src="voucher.png" alt="Voucher" class="voucher-img">
+    <div class="voucher-text">This voucher can be traded for a Valentine chocolate! 🍫</div>
   </div>
 
   <script>
