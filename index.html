@@ -84,6 +84,7 @@
       border: none; border-radius: 999px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,0.18);
       transition: transform 0.12s ease-out; touch-action: none;
       -webkit-user-select: none; will-change: left, top, transform;
+      pointer-events: auto;
     }
 
     /* Yes button smaller and placed below question */
@@ -196,6 +197,7 @@
       const MAX_ATTEMPTS = 40;
       let lastMove = 0;
       let animating = false;
+      let noBtnScale = 1;
 
       function getViewport() {
         const vv = window.visualViewport;
@@ -243,7 +245,7 @@
           if (t < 1) {
             requestAnimationFrame(step);
           } else {
-            noBtn.style.transform = 'translateX(0) scale(1)';
+            noBtn.style.transform = 'translateX(0) scale(' + noBtnScale + ')';
             animating = false;
           }
         }
@@ -324,6 +326,12 @@
       noBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        noBtnScale *= 0.9;
+        if (noBtnScale < 0.01) {
+          noBtn.style.display = 'none';
+        } else {
+          noBtn.style.transform = 'translateX(0) scale(' + noBtnScale + ')';
+        }
         moveNoButton();
       });
 
