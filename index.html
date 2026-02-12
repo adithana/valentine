@@ -157,7 +157,15 @@
     .redeem-screen.show { display: flex; }
     .redeem-inner { max-width: 480px; width: 100%; background: rgba(255,255,255,0.95); border-radius: 16px; padding: 20px; color: #6b2350; }
     .redeem-input { width: 100%; padding: 12px 14px; font-size: 1rem; border-radius: 10px; border: 1px solid #e0b9c9; margin-top: 12px; }
-    .redeem-submit { margin-top: 12px; background: #ff1493; color: #fff; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    /* make Redeem and Back buttons inside the redeem card the same size */
+    .redeem-inner .close-voucher,
+    .redeem-inner .redeem-submit {
+      margin-top: 12px; padding: 10px 18px; min-width: 120px; border-radius: 10px; font-weight: 700; font-size: 1rem;
+      display: inline-block; box-sizing: border-box; text-align: center;
+    }
+    .redeem-inner .redeem-submit { background: #ff1493; color: #fff; border: none; cursor: pointer; }
+    .redeem-inner .close-voucher { background: #fff; color: #ff1493; border: 2px solid #ff1493; cursor: pointer; }
+
     .chocolate { display: block; margin: 18px auto 0; width: 160px; height: auto; opacity: 0; transform: scale(.9); transition: opacity .25s ease; }
     .chocolate.show { opacity: 1; animation: chocolate-pulse 1.2s ease-in-out infinite; }
     @keyframes chocolate-pulse { 0% { transform: scale(0.92); } 50% { transform: scale(1.14); } 100% { transform: scale(0.92); } }
@@ -224,8 +232,8 @@
       <p>Enter your voucher code to claim your chocolate.</p>
       <input id="redeemInput" class="redeem-input" placeholder="Enter voucher code" aria-label="Voucher code">
       <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-        <button id="redeemSubmit" class="redeem-submit">Redeem</button>
         <button id="redeemBack" class="close-voucher" style="background:#fff;color:#ff1493;border:2px solid #ff1493;">Back</button>
+        <button id="redeemSubmit" class="redeem-submit">Redeem</button>
       </div>
       <img src="chocolate.png" alt="Chocolate" id="chocolateImg" class="chocolate" />
       <div id="redeemMsg" style="margin-top:10px;color:#6b2350;font-weight:700;"></div>
@@ -554,13 +562,7 @@
 
       function checkVoucherCode() {
         const v = (redeemInput.value || '').trim();
-        // optionally require that voucher was revealed first
-        const voucherVisible = voucherCodeEl && voucherCodeEl.style.display === 'block';
-        if (!voucherVisible) {
-          redeemMsg.textContent = 'Reveal the voucher first by tapping the secret heart.';
-          chocolateImg.classList.remove('show');
-          return;
-        }
+
         if (v === 'I-LOVE-KEVIN') {
           redeemMsg.textContent = 'Voucher accepted — enjoy your chocolate! 🍫';
           chocolateImg.classList.add('show');
