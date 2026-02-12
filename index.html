@@ -187,18 +187,16 @@
       // prevent accidental taps/clicks from activating newly revealed buttons
       let suppressClicksUntil = 0;
       // block early touch/pointer events so they don't reach underlying buttons
+      // Don't call preventDefault here (breaks synthetic click on some Android browsers).
+      // Instead, stop propagation and set suppression window so the click handler still fires.
       letter.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
         suppressClicksUntil = Date.now() + 700;
       });
       letter.addEventListener('touchstart', (e) => {
-        e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
         suppressClicksUntil = Date.now() + 700;
-      }, { passive: false });
+      });
       letter.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -419,15 +417,47 @@
         voucherScreen.setAttribute('aria-hidden', 'false');
       });
 
-      // initial placement: place the No button randomly on screen
+      // initial placement: try to place the No button directly below the Yes button,
+      // clamped to the viewport. If that would overlap or be offscreen, fallback to a safe random position.
       window.addEventListener('load', () => {
         const vp = getViewport();
         const btnW = noBtn.offsetWidth;
         const btnH = noBtn.offsetHeight;
-        const pos = findSafePosition(btnW, btnH);
-        noBtn.style.left = (pos.x + (vp.offsetLeft || 0)) + 'px';
-        noBtn.style.top  = (pos.y + (vp.offsetTop || 0)) + 'px';
-        noBtn.style.transform = 'translateX(0)';
+
+        const yesRect = rectFromEl(yesBtn);
+        const cs = getComputedStyle(document.documentElement);
+        const safeLeft = parseFloat(cs.getPropertyValue('--safe-left')) || 0;
+        const safeRight = parseFloat(cs.getPropertyValue('--safe-right')) || 0;
+        const safeTop = parseFloat(cs.getPropertyValue('--safe-top')) || 0;
+        const safeBottom = parseFloat(cs.getPropertyValue('--safe-bottom')) || 0;
+
+        const minX = EDGE_PADDING + safeLeft;
+        const maxX = Math.max(minX, vp.width - btnW - EDGE_PADDING - safeRight);
+        const minY = EDGE_PADDING + safeTop;
+        const maxY = Math.max(minY, vp.height - btnH - EDGE_PADDING - safeBottom);
+
+        // center under Yes button by default
+        let targetLeft = yesRect.left - (vp.offsetLeft || 0) + Math.floor((yesRect.width - btnW) / 2);
+        targetLeft = clamp(targetLeft, minX, maxX);
+
+        // place just below the Yes button
+        let targetTop = clamp(yesRect.bottom - (vp.offsetTop || 0) + EDGE_PADDING, minY, maxY);
+
+        const candidateRect = { left: targetLeft + (vp.offsetLeft || 0), top: targetTop + (vp.offsetTop || 0), right: targetLeft + (vp.offsetLeft || 0) + btnW, bottom: targetTop + (vp.offsetTop || 0) + btnH };
+        const containerRect = rectFromEl(container);
+        const yesElRect = rectFromEl(yesBtn);
+
+        if (overlaps(candidateRect, containerRect, 10) || overlaps(candidateRect, yesElRect, 6)) {
+          // fallback to existing safe random placement
+          const pos = findSafePosition(btnW, btnH);
+          noBtn.style.left = (pos.x + (vp.offsetLeft || 0)) + 'px';
+          noBtn.style.top  = (pos.y + (vp.offsetTop || 0)) + 'px';
+        } else {
+          noBtn.style.left = (targetLeft + (vp.offsetLeft || 0)) + 'px';
+          noBtn.style.top = (targetTop + (vp.offsetTop || 0)) + 'px';
+        }
+
+        noBtn.style.transform = 'translateX(0) scale(' + noBtnScale + ')';
       });
 
       // initial clamp
