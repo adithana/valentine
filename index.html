@@ -139,6 +139,9 @@
     .voucher-screen .heart { font-size: 2.5rem; cursor: pointer; user-select: none; transition: transform 0.12s ease; }
     .voucher-screen .heart:active { transform: scale(1.25); }
     .voucher-screen #voucherCode { display: none; margin-top: 18px; font-size: 1.1rem; color: #b30047; font-weight: 700; }
+    /* make the voucher text appear on a single line and show the code inside a boxed monospace element */
+    .voucher-screen #voucherCode { display: flex; gap: 10px; align-items: center; justify-content: center; white-space: nowrap; }
+    .voucher-screen .voucher-code-box { background: #fff; border: 1px dashed rgba(179,0,71,0.25); padding: 6px 10px; border-radius: 8px; color: #b30047; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; font-size: 1rem; letter-spacing: 0.08em; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
     .voucher-screen #hint { margin-top: 14px; color: #7a5670; font-size: 0.95rem; }
     /* move the close button to bottom-left and add a separate redeem button at bottom-right */
     .voucher-screen .close-voucher { position: absolute; left: 14px; bottom: 14px; background:#ff1493; color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:700; }
@@ -212,14 +215,15 @@
       <p>One of these hearts hides your Valentine voucher. But the right one needs a little extra love.</p>
 
       <div class="heart-container" id="heartContainer">
+        <!-- all hearts show the same glyph to make the secret indistinguishable -->
         <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
-        <span class="heart" data-secret="false" aria-hidden="false">💛</span>
-        <span class="heart" data-secret="true" aria-hidden="false">💖</span>
-        <span class="heart" data-secret="false" aria-hidden="false">💜</span>
-        <span class="heart" data-secret="false" aria-hidden="false">💙</span>
+        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
       </div>
 
-      <div id="voucherCode">🎉 Congratulations! Your voucher: <strong>I-LOVE-KEVIN</strong></div>
+      <div id="voucherCode">🎉 Congratulations! Your voucher: <span class="voucher-code-box" role="status" aria-live="polite"><code>I-LOVE-KEVIN</code></span></div>
       <div id="hint">Hint: Some hearts take time to open up.</div>
       <button class="close-voucher" id="closeVoucherBtn">Close</button>
       <button class="redeem-btn" id="redeemBtn">Redeem</button>
@@ -499,9 +503,16 @@
         secretClicks = 0;
         voucherCodeEl.style.display = 'none';
         hintEl.textContent = 'Hint: Some hearts take time to open up.';
-        // ensure hearts are enabled
-        const hearts = heartContainer.querySelectorAll('.heart');
-        hearts.forEach(h => h.style.opacity = '1');
+        // ensure hearts are enabled and *randomly* choose the secret heart each reset
+        const hearts = Array.from(heartContainer.querySelectorAll('.heart'));
+        hearts.forEach(h => {
+          h.style.opacity = '1';
+          h.setAttribute('data-secret', 'false');
+        });
+        const secretIndex = Math.floor(Math.random() * hearts.length);
+        hearts[secretIndex].setAttribute('data-secret', 'true');
+        // keep the existing (hard) tap requirement — currently set to 10
+        secretClicks = 0;
       }
 
       function tryRevealHeart(isSecret) {
