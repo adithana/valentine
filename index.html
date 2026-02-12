@@ -91,14 +91,16 @@
     #yesBtn {
       background:#ff1493; color:#fff;
       padding: 14px 28px; font-size: 1.05rem;
+      min-width: 100px; /* reduced initial width */
       cursor: pointer;
     }
 
     /* No button larger and fixed to viewport for movement */
     #noBtn {
       background:#808080; color:#fff;
-      padding: 20px 44px; font-size: 1.15rem;
-      min-width: 220px; /* ensure it's visibly larger */
+      /* slightly smaller visually by default */
+      padding: 14px 34px; font-size: 1.05rem;
+      min-width: 100px; /* reduced initial width */
       height: auto;
       position: fixed; z-index: 999;
       cursor: default;
@@ -214,7 +216,8 @@
       const MAX_ATTEMPTS = 40;
       let lastMove = 0;
       let animating = false;
-      let noBtnScale = 1;
+      // start slightly smaller than full size
+      let noBtnScale = 0.90;
 
       function getViewport() {
         const vv = window.visualViewport;
@@ -319,9 +322,9 @@
         if (now - lastMove < THROTTLE_MS) return;
         lastMove = now;
 
-        // shrink by ~5% each time the button moves
+        // shrink by ~10% each time the button moves (faster disappearance)
         if (noBtn.style.display === 'none') return;
-        noBtnScale *= 0.95;
+        noBtnScale *= 0.90;
         // if it's too small, hide it and stop interacting
         if (noBtnScale < 0.05) {
           noBtn.style.display = 'none';
