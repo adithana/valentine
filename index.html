@@ -132,7 +132,7 @@
     .voucher-screen.show { display: flex; }
 
     /* Voucher challenge styles (scoped under .voucher-screen) */
-    .voucher-screen .challenge-inner { max-width: 480px; width: 100%; background: rgba(255,255,255,0.9); border-radius: 16px; padding: 20px; color: #4a0030; }
+    .voucher-screen .challenge-inner { position: relative; max-width: 480px; width: 100%; background: rgba(255,255,255,0.9); border-radius: 16px; padding: 20px 20px 60px; color: #4a0030; }
     .voucher-screen .challenge-inner h2 { margin: 0 0 8px; color: #d1005d; }
     .voucher-screen .challenge-inner p { margin: 0 0 16px; color: #6b2350; }
     .voucher-screen .heart-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 360px; margin: 10px auto; }
@@ -140,7 +140,9 @@
     .voucher-screen .heart:active { transform: scale(1.25); }
     .voucher-screen #voucherCode { display: none; margin-top: 18px; font-size: 1.1rem; color: #b30047; font-weight: 700; }
     .voucher-screen #hint { margin-top: 14px; color: #7a5670; font-size: 0.95rem; }
-    .voucher-screen .close-voucher { margin-top: 18px; background:#ff1493; color:#fff; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; font-weight:700; }
+    /* move the close button to bottom-left and add a separate redeem button at bottom-right */
+    .voucher-screen .close-voucher { position: absolute; left: 14px; bottom: 14px; background:#ff1493; color:#fff; border:none; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:700; }
+    .voucher-screen .redeem-btn { position: absolute; right: 14px; bottom: 14px; background: #fff; color: #ff1493; border: 2px solid #ff1493; padding:8px 14px; border-radius:12px; cursor:pointer; font-weight:700; }
 
     /* legacy placeholders removed (voucher-img / voucher-text) */
     .voucher-img { display: none; }
@@ -212,6 +214,21 @@
       <div id="voucherCode">🎉 Congratulations! Your voucher: <strong>I-LOVE-KEVIN</strong></div>
       <div id="hint">Hint: Some hearts take time to open up.</div>
       <button class="close-voucher" id="closeVoucherBtn">Close</button>
+      <button class="redeem-btn" id="redeemBtn">Redeem</button>
+    </div>
+  </div>
+
+  <div class="redeem-screen" id="redeemScreen" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="redeem-inner" role="document" aria-labelledby="redeemTitle">
+      <h2 id="redeemTitle">Redeem Your Voucher</h2>
+      <p>Enter your voucher code to claim your chocolate.</p>
+      <input id="redeemInput" class="redeem-input" placeholder="Enter voucher code" aria-label="Voucher code">
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button id="redeemSubmit" class="redeem-submit">Redeem</button>
+        <button id="redeemBack" class="close-voucher" style="background:#fff;color:#ff1493;border:2px solid #ff1493;">Back</button>
+      </div>
+      <img src="chocolate.png" alt="Chocolate" id="chocolateImg" class="chocolate" />
+      <div id="redeemMsg" style="margin-top:10px;color:#6b2350;font-weight:700;"></div>
     </div>
   </div>
 
@@ -486,7 +503,7 @@
         }
 
         secretClicks++;
-        if (secretClicks < 3) {
+        if (secretClicks < 10) {
           hintEl.textContent = 'This heart feels special… try tapping it again.';
         } else {
           voucherCodeEl.style.display = 'block';
@@ -575,22 +592,26 @@
         const minY = EDGE_PADDING + safeTop;
         const maxY = Math.max(minY, vp.height - btnH - EDGE_PADDING - safeBottom);
 
-        // center under Yes button by default
+        // horizontally center under the Yes button, but force the initial vertical
+        // position to the bottom of the viewport (so No starts at the bottom).
         let targetLeft = yesRect.left - (vp.offsetLeft || 0) + Math.floor((yesRect.width - btnW) / 2);
         targetLeft = clamp(targetLeft, minX, maxX);
 
-        // place just below the Yes button
-        let targetTop = clamp(yesRect.bottom - (vp.offsetTop || 0) + EDGE_PADDING, minY, maxY);
+        // place at the bottom of the viewport (respecting safe area / padding)
+        let targetTop = maxY;
 
         const candidateRect = { left: targetLeft + (vp.offsetLeft || 0), top: targetTop + (vp.offsetTop || 0), right: targetLeft + (vp.offsetLeft || 0) + btnW, bottom: targetTop + (vp.offsetTop || 0) + btnH };
         const containerRect = rectFromEl(container);
         const yesElRect = rectFromEl(yesBtn);
 
+        // if the bottom-centered candidate overlaps the main container or the Yes button,
+        // fall back to the safe random placement (keeps behavior robust on very small screens)
         if (overlaps(candidateRect, containerRect, 10) || overlaps(candidateRect, yesElRect, 6)) {
-          // fallback to existing safe random placement
           const pos = findSafePosition(btnW, btnH);
+          // prefer positions near the bottom if possible
+          const fallbackY = clamp(Math.max(pos.y, maxY - Math.floor(btnH * 1.2)), minY, maxY);
           noBtn.style.left = (pos.x + (vp.offsetLeft || 0)) + 'px';
-          noBtn.style.top  = (pos.y + (vp.offsetTop || 0)) + 'px';
+          noBtn.style.top  = (fallbackY + (vp.offsetTop || 0)) + 'px';
         } else {
           noBtn.style.left = (targetLeft + (vp.offsetLeft || 0)) + 'px';
           noBtn.style.top = (targetTop + (vp.offsetTop || 0)) + 'px';
