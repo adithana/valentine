@@ -126,12 +126,39 @@
 
     .voucher-screen {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
-      background: linear-gradient(135deg,#ffe4e1 0%,#ffb6c1 100%); color: white; z-index: 1100; padding: 20px;
-      flex-direction: column;
+      background: linear-gradient(135deg,#ffe4e1 0%,#ffb6c1 100%); color: #b30047; z-index: 1100; padding: 20px;
+      flex-direction: column; text-align: center;
     }
     .voucher-screen.show { display: flex; }
-    .voucher-img { width: 300px; height: auto; margin-bottom: 20px; }
-    .voucher-text { font-size: 1.5rem; text-align: center; }
+
+    /* Voucher challenge styles (scoped under .voucher-screen) */
+    .voucher-screen .challenge-inner { max-width: 480px; width: 100%; background: rgba(255,255,255,0.9); border-radius: 16px; padding: 20px; color: #4a0030; }
+    .voucher-screen .challenge-inner h2 { margin: 0 0 8px; color: #d1005d; }
+    .voucher-screen .challenge-inner p { margin: 0 0 16px; color: #6b2350; }
+    .voucher-screen .heart-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 360px; margin: 10px auto; }
+    .voucher-screen .heart { font-size: 2.5rem; cursor: pointer; user-select: none; transition: transform 0.12s ease; }
+    .voucher-screen .heart:active { transform: scale(1.25); }
+    .voucher-screen #voucherCode { display: none; margin-top: 18px; font-size: 1.1rem; color: #b30047; font-weight: 700; }
+    .voucher-screen #hint { margin-top: 14px; color: #7a5670; font-size: 0.95rem; }
+    .voucher-screen .close-voucher { margin-top: 18px; background:#ff1493; color:#fff; border:none; padding:10px 18px; border-radius:12px; cursor:pointer; font-weight:700; }
+
+    /* legacy placeholders removed (voucher-img / voucher-text) */
+    .voucher-img { display: none; }
+    .voucher-text { display: none; }
+
+    /* Redeem screen + chocolate animation */
+    .redeem-screen {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      background: linear-gradient(135deg,#fff5f8 0%,#ffd6e8 100%); color: #6b2350; z-index: 1200; padding: 20px;
+      flex-direction: column; text-align: center;
+    }
+    .redeem-screen.show { display: flex; }
+    .redeem-inner { max-width: 480px; width: 100%; background: rgba(255,255,255,0.95); border-radius: 16px; padding: 20px; color: #6b2350; }
+    .redeem-input { width: 100%; padding: 12px 14px; font-size: 1rem; border-radius: 10px; border: 1px solid #e0b9c9; margin-top: 12px; }
+    .redeem-submit { margin-top: 12px; background: #ff1493; color: #fff; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+    .chocolate { display: block; margin: 18px auto 0; width: 160px; height: auto; opacity: 0; transform: scale(.9); transition: opacity .25s ease; }
+    .chocolate.show { opacity: 1; animation: chocolate-pulse 1.2s ease-in-out infinite; }
+    @keyframes chocolate-pulse { 0% { transform: scale(0.92); } 50% { transform: scale(1.14); } 100% { transform: scale(0.92); } }
 
     @media (max-width: 420px) {
       .buttons { flex-direction: column; gap: 10px; }
@@ -166,12 +193,26 @@
       <video src="haru.mp4" autoplay loop muted></video>
       <video src="nami.mp4" autoplay loop muted></video>
     </div>
-    <button class="gift-btn" id="giftBtn">Gift Voucher</button>
+    <button class="gift-btn" id="giftBtn">Want next challenge?</button>
   </div>
 
   <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
-    <img src="voucher.png" alt="Voucher" class="voucher-img">
-    <div class="voucher-text">This voucher can be traded for a Valentine chocolate! 🍫</div>
+    <div class="challenge-inner" role="document" aria-labelledby="voucherTitle">
+      <h2 id="voucherTitle">Pick the Heart That Loves You Back</h2>
+      <p>One of these hearts hides your Valentine voucher. But the right one needs a little extra love.</p>
+
+      <div class="heart-container" id="heartContainer">
+        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+        <span class="heart" data-secret="false" aria-hidden="false">💛</span>
+        <span class="heart" data-secret="true" aria-hidden="false">💖</span>
+        <span class="heart" data-secret="false" aria-hidden="false">💜</span>
+        <span class="heart" data-secret="false" aria-hidden="false">💙</span>
+      </div>
+
+      <div id="voucherCode">🎉 Congratulations! Your voucher: <strong>I-LOVE-KEVIN</strong></div>
+      <div id="hint">Hint: Some hearts take time to open up.</div>
+      <button class="close-voucher" id="closeVoucherBtn">Close</button>
+    </div>
   </div>
 
   <script>
@@ -416,9 +457,104 @@
       const giftBtn = document.getElementById('giftBtn');
       const voucherScreen = document.getElementById('voucherScreen');
       giftBtn.addEventListener('click', () => {
+        // reset challenge state each time the modal is opened
+        resetVoucherChallenge();
         voucherScreen.classList.add('show');
         voucherScreen.setAttribute('aria-hidden', 'false');
       });
+
+      // --- Voucher challenge logic ---
+      const heartContainer = document.getElementById('heartContainer');
+      const voucherCodeEl = document.getElementById('voucherCode');
+      const hintEl = document.getElementById('hint');
+      const closeVoucherBtn = document.getElementById('closeVoucherBtn');
+      let secretClicks = 0;
+
+      function resetVoucherChallenge() {
+        secretClicks = 0;
+        voucherCodeEl.style.display = 'none';
+        hintEl.textContent = 'Hint: Some hearts take time to open up.';
+        // ensure hearts are enabled
+        const hearts = heartContainer.querySelectorAll('.heart');
+        hearts.forEach(h => h.style.opacity = '1');
+      }
+
+      function tryRevealHeart(isSecret) {
+        if (!isSecret) {
+          hintEl.textContent = 'Nope — try another heart!';
+          return;
+        }
+
+        secretClicks++;
+        if (secretClicks < 3) {
+          hintEl.textContent = 'This heart feels special… try tapping it again.';
+        } else {
+          voucherCodeEl.style.display = 'block';
+          hintEl.textContent = 'Voucher revealed — enjoy!';
+        }
+      }
+
+      // delegate clicks inside the heart container
+      heartContainer.addEventListener('click', (e) => {
+        const heart = e.target.closest('.heart');
+        if (!heart) return;
+        const isSecret = heart.getAttribute('data-secret') === 'true';
+        tryRevealHeart(isSecret);
+      });
+
+      closeVoucherBtn.addEventListener('click', () => {
+        voucherScreen.classList.remove('show');
+        voucherScreen.setAttribute('aria-hidden', 'true');
+      });
+
+      // Redeem flow: open a small redeem screen where user can type voucher code
+      const redeemBtnEl = document.getElementById('redeemBtn');
+      const redeemScreen = document.getElementById('redeemScreen');
+      const redeemInput = document.getElementById('redeemInput');
+      const redeemSubmit = document.getElementById('redeemSubmit');
+      const redeemBack = document.getElementById('redeemBack');
+      const chocolateImg = document.getElementById('chocolateImg');
+      const redeemMsg = document.getElementById('redeemMsg');
+
+      redeemBtnEl.addEventListener('click', () => {
+        // move to redeem screen
+        voucherScreen.classList.remove('show');
+        voucherScreen.setAttribute('aria-hidden', 'true');
+        redeemScreen.classList.add('show');
+        redeemScreen.setAttribute('aria-hidden', 'false');
+        redeemInput.value = '';
+        redeemMsg.textContent = '';
+        chocolateImg.classList.remove('show');
+        redeemInput.focus();
+      });
+
+      redeemBack.addEventListener('click', () => {
+        redeemScreen.classList.remove('show');
+        redeemScreen.setAttribute('aria-hidden', 'true');
+        voucherScreen.classList.add('show');
+        voucherScreen.setAttribute('aria-hidden', 'false');
+      });
+
+      function checkVoucherCode() {
+        const v = (redeemInput.value || '').trim();
+        // optionally require that voucher was revealed first
+        const voucherVisible = voucherCodeEl && voucherCodeEl.style.display === 'block';
+        if (!voucherVisible) {
+          redeemMsg.textContent = 'Reveal the voucher first by tapping the secret heart.';
+          chocolateImg.classList.remove('show');
+          return;
+        }
+        if (v === 'I-LOVE-KEVIN') {
+          redeemMsg.textContent = 'Voucher accepted — enjoy your chocolate! 🍫';
+          chocolateImg.classList.add('show');
+        } else {
+          redeemMsg.textContent = 'Invalid voucher — try again.';
+          chocolateImg.classList.remove('show');
+        }
+      }
+
+      redeemSubmit.addEventListener('click', checkVoucherCode);
+      redeemInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') checkVoucherCode(); });
 
       // initial placement: try to place the No button directly below the Yes button,
       // clamped to the viewport. If that would overlap or be offscreen, fallback to a safe random position.
