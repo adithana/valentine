@@ -234,6 +234,9 @@
       font-size: 1.1rem;
       cursor: pointer;
       transition: transform 0.2s ease;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
     }
 
     .next-to-voucher-btn:active { transform: scale(0.95); }
@@ -274,19 +277,20 @@
         <video src="haru.mp4" autoplay loop muted></video>
         <video src="nami.mp4" autoplay loop muted></video>
       </div>
-      <button class="gift-btn" id="giftBtn">Want next challenge?</button>
+      <button class="gift-btn" id="giftBtn">I have something to tell you</button>
     </div>
 
     <div class="message-screen" id="messageScreen" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="message-content">
         <p class="romantic-text">
-          "Thank you for every moment — the quiet ones, the silly ones, the magical ones, 
+          "Happy Valentine's Day! 
+          Thank you for every moment — the quiet ones, the silly ones, the magical ones, 
           and even the hard ones we got through together. I’m grateful for the way you love me, 
           for the memories we’ve built, and for the life we’re still creating side by side. 
           I love you, and I’m thankful for every year, every day, every little moment with you."
         </p>
-        <button class="next-to-voucher-btn" id="toVoucherBtn">See My Surprise</button>
       </div>
+      <button class="next-to-voucher-btn" id="toVoucherBtn">Want another Surprise?</button>
     </div>
 
     <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
@@ -313,7 +317,7 @@
     <div class="redeem-screen" id="redeemScreen" role="dialog" aria-modal="true" aria-hidden="true">
       <div class="redeem-inner" role="document" aria-labelledby="redeemTitle">
         <h2 id="redeemTitle">Redeem Your Voucher</h2>
-        <p>Enter your voucher code to claim your chocolate.</p>
+        <p>Enter your voucher code to claim your Gift.</p>
         <input id="redeemInput" class="redeem-input" placeholder="Enter voucher code" aria-label="Voucher code">
         <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
           <button id="redeemBack" class="close-voucher" style="background:#fff;color:#ff1493;border:2px solid #ff1493;">Back</button>
@@ -699,7 +703,7 @@
         const v = (redeemInput.value || '').trim();
 
         if (v === 'I-LOVE-KEVIN') {
-          redeemMsg.textContent = 'Voucher accepted — enjoy your chocolate! 🍫';
+          redeemMsg.textContent = 'Voucher accepted — enjoy your special gift!';
           chocolateImg.classList.add('show');
         } else {
           redeemMsg.textContent = 'Invalid voucher — try again.';
