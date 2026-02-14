@@ -192,18 +192,69 @@
       cursor: pointer;
     }
 
+    .message-screen {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      z-index: 1050; padding: 30px; text-align: center;
+      /* Eiffel Tower Background */
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('eiffell.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .message-screen.show { display: flex; }
+
+    .message-content {
+      max-width: 600px;
+      backdrop-filter: blur(8px); /* Blurs the background image */
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(255, 255, 255, 0.15); /* Semi-transparent overlay */
+      padding: 40px 30px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .romantic-text {
+      font-family: 'Georgia', serif; /* Or 'Dancing Script' if you link a Google Font */
+      font-style: italic;
+      font-size: 1.4rem;
+      line-height: 1.6;
+      color: #ffffff;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+      margin-bottom: 30px;
+    }
+
+    .next-to-voucher-btn {
+      background: #ff1493;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 999px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .next-to-voucher-btn:active { transform: scale(0.95); }
+
+    @media (max-width: 480px) {
+      .romantic-text { font-size: 1.1rem; }
+    }
+
   </style>
 </head>
 <body>
   <audio id="bgm" loop autoplay>
     <source src="Liebestraum.mp3" type="audio/mpeg">
   </audio>
-  <div>
     <div class="screen letter-screen" id="letterScreen">
       <div class="letter">
         <img src="loveletter.png" alt="Love Letter" class="love-letter-img">
         <div class="letter-text">You got a letter! 💌</div>
+        
       </div>
+      <button id="toggleMusic" class="music-btn">🎵 Music</button>
     </div>
 
     <div class="screen question-screen hidden" id="questionScreen">
@@ -224,6 +275,18 @@
         <video src="nami.mp4" autoplay loop muted></video>
       </div>
       <button class="gift-btn" id="giftBtn">Want next challenge?</button>
+    </div>
+
+    <div class="message-screen" id="messageScreen" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="message-content">
+        <p class="romantic-text">
+          "Thank you for every moment — the quiet ones, the silly ones, the magical ones, 
+          and even the hard ones we got through together. I’m grateful for the way you love me, 
+          for the memories we’ve built, and for the life we’re still creating side by side. 
+          I love you, and I’m thankful for every year, every day, every little moment with you."
+        </p>
+        <button class="next-to-voucher-btn" id="toVoucherBtn">See My Surprise</button>
+      </div>
     </div>
 
     <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
@@ -260,8 +323,7 @@
         <div id="redeemMsg" style="margin-top:10px;color:#6b2350;font-weight:700;"></div>
       </div>
     </div>
-  <button id="toggleMusic" class="music-btn">🎵 Music</button>
-  </div>
+
   
   
 
@@ -524,12 +586,32 @@
         success.setAttribute('aria-hidden', 'false');
       }, { passive: false });
 
-      // Gift button opens voucher
+      // // Gift button opens voucher
+      // const giftBtn = document.getElementById('giftBtn');
+      // const voucherScreen = document.getElementById('voucherScreen');
+      // giftBtn.addEventListener('click', () => {
+      //   // reset challenge state each time the modal is opened
+      //   resetVoucherChallenge();
+      //   voucherScreen.classList.add('show');
+      //   voucherScreen.setAttribute('aria-hidden', 'false');
+      // });
+
       const giftBtn = document.getElementById('giftBtn');
+      const messageScreen = document.getElementById('messageScreen');
+      const toVoucherBtn = document.getElementById('toVoucherBtn');
       const voucherScreen = document.getElementById('voucherScreen');
+
+      // 1. Success Screen "Want next challenge?" button now goes to Message Screen
       giftBtn.addEventListener('click', () => {
-        // reset challenge state each time the modal is opened
-        resetVoucherChallenge();
+        success.classList.remove('show'); // Hide success
+        messageScreen.classList.add('show');
+        messageScreen.setAttribute('aria-hidden', 'false');
+      });
+
+      // 2. New Message Screen button goes to Voucher Screen
+      toVoucherBtn.addEventListener('click', () => {
+        messageScreen.classList.remove('show');
+        resetVoucherChallenge(); // Resets the heart game
         voucherScreen.classList.add('show');
         voucherScreen.setAttribute('aria-hidden', 'false');
       });
