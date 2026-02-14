@@ -179,72 +179,114 @@
       #noBtn  { min-width: 160px; padding: 18px 28px; font-size: 1.05rem; }
       .envelope { width: 150px; height: 105px; }
     }
+    
+    .music-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
-  <div class="screen letter-screen" id="letterScreen">
-    <div class="letter">
-      <img src="loveletter.png" alt="Love Letter" class="love-letter-img">
-      <div class="letter-text">You got a letter! 💌</div>
-    </div>
-  </div>
-
-  <div class="screen question-screen hidden" id="questionScreen">
-    <div class="container" id="mainContainer">
-      <h1>❤️ Will You Be My Valentine? ❤️</h1>
-      <div class="buttons">
-        <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
-        <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
+  <audio id="bgm" loop>
+    <source src="Liebestraum.mp3" type="audio/mpeg">
+  </audio>
+  <div>
+    <div class="screen letter-screen" id="letterScreen">
+      <div class="letter">
+        <img src="loveletter.png" alt="Love Letter" class="love-letter-img">
+        <div class="letter-text">You got a letter! 💌</div>
       </div>
     </div>
-  </div>
 
-  <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="hearts">💕 💕 💕</div>
-    <h2>Yay! I knew it! 🥰</h2>
-    <div class="videos">
-      <video src="haru.mp4" autoplay loop muted></video>
-      <video src="nami.mp4" autoplay loop muted></video>
-    </div>
-    <button class="gift-btn" id="giftBtn">Want next challenge?</button>
-  </div>
-
-  <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="challenge-inner" role="document" aria-labelledby="voucherTitle">
-      <h2 id="voucherTitle">Pick the Heart That Loves You Back</h2>
-      <p>One of these hearts hides your Valentine voucher. But the right one needs a little extra love.</p>
-
-      <div class="heart-container" id="heartContainer">
-        <!-- all hearts show the same glyph to make the secret indistinguishable -->
-        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
-        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
-        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
-        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
-        <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+    <div class="screen question-screen hidden" id="questionScreen">
+      <div class="container" id="mainContainer">
+        <h1>❤️ Will You Be My Valentine? ❤️</h1>
+        <div class="buttons">
+          <button id="yesBtn" aria-label="Yes, I will">Yes! 💕</button>
+          <button id="noBtn" aria-label="No, I won't" class="nonclickable" aria-disabled="true" tabindex="-1">No</button>
+        </div>
       </div>
-
-      <div id="voucherCode">🎉 Congratulations! Your voucher: <span class="voucher-code-box" role="status" aria-live="polite"><code>I-LOVE-KEVIN</code></span></div>
-      <div id="hint">Hint: Some hearts take time to open up.</div>
-      <button class="close-voucher" id="closeVoucherBtn">Close</button>
-      <button class="redeem-btn" id="redeemBtn">Redeem</button>
     </div>
-  </div>
 
-  <div class="redeem-screen" id="redeemScreen" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="redeem-inner" role="document" aria-labelledby="redeemTitle">
-      <h2 id="redeemTitle">Redeem Your Voucher</h2>
-      <p>Enter your voucher code to claim your chocolate.</p>
-      <input id="redeemInput" class="redeem-input" placeholder="Enter voucher code" aria-label="Voucher code">
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-        <button id="redeemBack" class="close-voucher" style="background:#fff;color:#ff1493;border:2px solid #ff1493;">Back</button>
-        <button id="redeemSubmit" class="redeem-submit">Redeem</button>
+    <div class="success" id="successScreen" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="hearts">💕 💕 💕</div>
+      <h2>Yay! I knew it! 🥰</h2>
+      <div class="videos">
+        <video src="haru.mp4" autoplay loop muted></video>
+        <video src="nami.mp4" autoplay loop muted></video>
       </div>
-      <img src="chocolate.png" alt="Chocolate" id="chocolateImg" class="chocolate" />
-      <div id="redeemMsg" style="margin-top:10px;color:#6b2350;font-weight:700;"></div>
+      <button class="gift-btn" id="giftBtn">Want next challenge?</button>
     </div>
+
+    <div class="voucher-screen" id="voucherScreen" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="challenge-inner" role="document" aria-labelledby="voucherTitle">
+        <h2 id="voucherTitle">Pick the Heart That Loves You Back</h2>
+        <p>One of these hearts hides your Valentine voucher. But the right one needs a little extra love.</p>
+
+        <div class="heart-container" id="heartContainer">
+          <!-- all hearts show the same glyph to make the secret indistinguishable -->
+          <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+          <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+          <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+          <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+          <span class="heart" data-secret="false" aria-hidden="false">❤️</span>
+        </div>
+
+        <div id="voucherCode">🎉 Congratulations! Your voucher: <span class="voucher-code-box" role="status" aria-live="polite"><code>I-LOVE-KEVIN</code></span></div>
+        <div id="hint">Hint: Some hearts take time to open up.</div>
+        <button class="close-voucher" id="closeVoucherBtn">Close</button>
+        <button class="redeem-btn" id="redeemBtn">Redeem</button>
+      </div>
+    </div>
+
+    <div class="redeem-screen" id="redeemScreen" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="redeem-inner" role="document" aria-labelledby="redeemTitle">
+        <h2 id="redeemTitle">Redeem Your Voucher</h2>
+        <p>Enter your voucher code to claim your chocolate.</p>
+        <input id="redeemInput" class="redeem-input" placeholder="Enter voucher code" aria-label="Voucher code">
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+          <button id="redeemBack" class="close-voucher" style="background:#fff;color:#ff1493;border:2px solid #ff1493;">Back</button>
+          <button id="redeemSubmit" class="redeem-submit">Redeem</button>
+        </div>
+        <img src="chocolate.png" alt="Chocolate" id="chocolateImg" class="chocolate" />
+        <div id="redeemMsg" style="margin-top:10px;color:#6b2350;font-weight:700;"></div>
+      </div>
+    </div>
+  <button id="toggleMusic" class="music-btn">🔇 Music</button>
   </div>
+  
+  
 
   <script>
+
+    const bgm = document.getElementById('bgm');
+    const btn = document.getElementById('toggleMusic');
+
+    document.addEventListener('click', () => {
+      if (bgm.paused) {
+        bgm.volume = 0.25; // soft and romantic
+        bgm.play();
+      }
+    }, { once: true });
+
+    btn.addEventListener('click', () => {
+      if (bgm.paused) {
+        bgm.play();
+        btn.textContent = "🎵 Music";
+      } else {
+        bgm.pause();
+        btn.textContent = "🔇 Music";
+      }
+    });
+
     (function () {
       const letterScreen = document.getElementById('letterScreen');
       const questionScreen = document.getElementById('questionScreen');
